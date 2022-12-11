@@ -26,7 +26,21 @@ namespace Expense_Overview.Account_Statements
 
                 if (ofd.ShowDialog() ?? false && new FileInfo(ofd.FileName).Exists)
                 {
+                    expenses = new List<Expense>();
 
+                    var exp = new Expense();
+                    exp.Created = DateTime.MinValue;
+                    exp.Booked = DateTime.MinValue;
+                    exp.Imported = DateTime.Now;
+                    exp.ClientName = "";
+                    exp.BookingText = "";
+                    exp.UsageText = "";
+                    exp.Value = 0;
+                    exp.Currency = "";
+                    exp.Comment = "";
+                    exp.ImportText = "";
+
+                    expenses.Add(exp);
                     return true;
                 }
                 return false;
@@ -37,25 +51,6 @@ namespace Expense_Overview.Account_Statements
             }
             return false;
         }
-        public List<Tuple<Expense, bool>> CheckForDuplicates(List<Expense> CurrentData)
-        {
-            try
-            {
-                List<Tuple<Expense, bool>> CheckedData = new List<Tuple<Expense, bool>>();
-                foreach (var exp in this.Expenses)
-                {
-                    bool isDupe = false;
-
-
-                    CheckedData.Add(new Tuple<Expense, bool>(exp, isDupe));
-                }
-                return CheckedData;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error checking for duplicates.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            return null;
-        }
+        
     }
 }
