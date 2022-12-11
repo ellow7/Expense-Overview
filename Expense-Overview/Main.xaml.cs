@@ -24,6 +24,7 @@ namespace Expense_Overview
         public Main()
         {
             InitializeComponent();
+            DGExpenses.AutoGenerateColumns = false;
         }
 
         private void Window_Initialized(object sender, EventArgs e)
@@ -33,15 +34,16 @@ namespace Expense_Overview
             var typ = db.ExpenseTypes.Where(R => R.Name == "Holiday").FirstOrDefault() ?? new ExpenseTypes("Holiday", "");
 
             var exp = new Expenses();
-            exp.Value = 500.0000009M;
-            exp.ClientName = "Peter Pan Neverland Holiday";
+            exp.Value = 500.00M;
+            exp.ClientName = "Peter Pan Holidays";
+            exp.BookingText = "Neverland Holiday 2022";
             exp.Booked = DateTime.Now.AddDays(-5);
             exp.ExpenseTypes = typ;
             db.Expenses.Add(exp);
             db.SaveChanges();
 
-            db.Expenses.OrderBy(R => R.Booked).Load();
-            DGExpenses.ItemsSource = db.Expenses.Local;
+            db.Expenses.Load();
+            DGExpenses.ItemsSource = db.Expenses.Local.OrderByDescending(R=>R.Booked);
         }
     }
 }

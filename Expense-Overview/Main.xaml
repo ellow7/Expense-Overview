@@ -6,11 +6,51 @@
         xmlns:local="clr-namespace:Expense_Overview"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" Initialized="Window_Initialized" FontFamily="Consolas" FontSize="16">
-    <Grid>
+    <DockPanel>
         <TabControl HorizontalAlignment="Stretch" Width="NaN" Height="NaN" Margin="0,0,0,0" VerticalAlignment="Stretch">
-            <TabItem Header="TabItem">
-                <DataGrid x:Name="DGExpenses" d:ItemsSource="{d:SampleData ItemCount=10}"/>
+            <TabItem Header="Expenses">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top">
+                        <Label Content="From:" Padding="5" />
+                        <DatePicker Padding="5" />
+                        <Label Content="To:" Padding="5" />
+                        <DatePicker Padding="5" />
+                        <Button Content="Load" Padding="5"></Button>
+                        <Button Content="Save" Padding="5"></Button>
+                        <Label />
+                    </DockPanel>
+                    <DataGrid x:Name="DGExpenses" d:ItemsSource="{d:SampleData ItemCount=10}" ScrollViewer.CanContentScroll="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Booked" Binding="{Binding Booked}" />
+                            <DataGridTextColumn Header="ClientName" Binding="{Binding ClientName}" />
+                            <DataGridTextColumn Header="BookingText" Binding="{Binding BookingText}" />
+                            <DataGridTextColumn Header="Value" Binding="{Binding Value}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
             </TabItem>
+            <TabItem Header="Import">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top">
+                        <Button Content="Import" Padding="5"></Button>
+                        <Button Content="Save" Padding="5"></Button>
+                        <Label />
+                    </DockPanel>
+                    <DataGrid x:Name="DGImport" d:ItemsSource="{d:SampleData ItemCount=10}" ScrollViewer.CanContentScroll="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Booked" Binding="{Binding Booked}" />
+                            <DataGridTextColumn Header="ClientName" Binding="{Binding ClientName}" />
+                            <DataGridTextColumn Header="BookingText" Binding="{Binding BookingText}" />
+                            <DataGridTextColumn Header="Value" Binding="{Binding Value}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="Settings">
+            </TabItem>
+
         </TabControl>
-    </Grid>
+
+    </DockPanel>
 </Window>
