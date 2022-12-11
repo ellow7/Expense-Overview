@@ -2,6 +2,7 @@
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Drawing.Charts;
+using Expense_Overview.Account_Statements;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -113,6 +114,7 @@ namespace Expense_Overview
                 #region ExpenseTypes
                 DB.ExpenseType.Load();
                 DGCBCExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id);//Combobox in Expenses
+                DGCBCExpenseTypesImport.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id);//Combobox in Import
                 DGExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id);//Datagrid in ExpenseTypes
                 //DGExpenseTypes.Columns.FirstOrDefault().SortDirection = System.ComponentModel.ListSortDirection.Descending;
                 #endregion
@@ -230,9 +232,45 @@ namespace Expense_Overview
         #endregion
 
         #region Import
-        private bool import()
+        AccountStatement import;
+        AccountStatementHandler importHandler;
+        private void BTImport_Click(object sender, RoutedEventArgs e)
         {
-            return false;
+            try
+            {
+                DGImport.ItemsSource = null;
+                import = new DibaStatement();//change this if you implemented new types
+                import.ReadImport();
+                importHandler = new AccountStatementHandler(import, DB);
+                importHandler.RemoveDuplicates();
+                importHandler.GuessExpenseTypes();
+
+                DGImport.ItemsSource = importHandler.Statement.Expenses;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error importing.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                DGImport.ItemsSource = null;//reset import
+                import = null;
+                importHandler = null;
+            }
+        }
+
+        private void BTSaveImport_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                DB.Expense.AddRange(import.Expenses);
+                DB.SaveChanges();
+                DGImport.ItemsSource = null;//reset import
+                import = null;
+                importHandler = null;
+                LoadData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving import.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
         #endregion
     }

@@ -111,6 +111,11 @@ namespace Expense_Overview
         //FKs
         public virtual ExpenseType ExpenseType { get; set; }
 
+        //Helper
+        public override string ToString()
+        {
+            return $"Booked {Booked.ToString("yyyy-MM-dd HH:mm")} to {ClientName} with the following information: {BookingText} {UsageText}";
+        }
     }
     /// <summary>
     /// What type of expense. E.g. groceries, car, toys
@@ -143,7 +148,7 @@ namespace Expense_Overview
         //Helper
         public override string ToString()
         {
-            return this.Name;
+            return Name;
         }
     }
 }

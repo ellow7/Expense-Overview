@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,8 +28,26 @@ namespace Expense_Overview.Account_Statements
         {
             try
             {
+                if (Statement.Expenses == null || Statement.Expenses.Count == 0)
+                    return true;
                 foreach (var exp in Statement.Expenses)
                 {
+                    //exact matches with client name and usage text
+                    var exactMatches = CurrentData.Expense.Where(R => R.ClientName == exp.ClientName && R.UsageText == exp.UsageText).ToList();
+                    if (exactMatches.Any())
+                    {
+                        exp.ExpenseType = exactMatches.Where(R => R.ExpenseType != null).OrderByDescending(R => R.Booked).FirstOrDefault()?.ExpenseType ?? null;
+                        continue;
+                    }
+
+                    //likely matches with client name
+                    var likelyMatches = CurrentData.Expense.Where(R => R.ClientName == exp.ClientName).ToList();
+                    if (likelyMatches.Any())
+                    {
+                        exp.ExpenseType = likelyMatches.Where(R => R.ExpenseType != null).OrderByDescending(R => R.Booked).FirstOrDefault()?.ExpenseType ?? null;
+                        continue;
+                    }
+
                     exp.ExpenseType = null;
                 }
                 return true;
@@ -43,30 +62,36 @@ namespace Expense_Overview.Account_Statements
         {
             try
             {
+                if (Statement.Expenses == null || Statement.Expenses.Count == 0)
+                    return true;
+                List<Expense> exactDuplicates = new List<Expense>();
+                List<Expense> likelyDuplicates = new List<Expense>();
                 List<Expense> probablyDuplicates = new List<Expense>();
                 foreach (var exp in Statement.Expenses)
                 {
-
-                    var exactDuplicate = CurrentData.Expense.Where(R => R.ImportText == exp.ImportText).First();
+                    //remove exact duplicates via import text
+                    var exactDuplicate = CurrentData.Expense.Where(R => R.ImportText == exp.ImportText).FirstOrDefault();
                     if (exactDuplicate != null)
                     {
-                        CurrentData.Expense.Remove(exactDuplicate);
+                        exactDuplicates.Add(exactDuplicate);
                         continue;
                     }
 
+                    //remove likely duplicates with properties
                     var likelyDuplicate = CurrentData.Expense.Where(R =>
                             R.Booked == exp.Booked
                             && R.ClientName == exp.ClientName
                             && R.BookingText == exp.BookingText
                             && R.UsageText == exp.UsageText
                             && R.Value == exp.Value
-                        ).First();
+                        ).FirstOrDefault();
                     if (likelyDuplicate != null)
                     {
-                        CurrentData.Expense.Remove(likelyDuplicate);
+                        likelyDuplicates.Add(likelyDuplicate);
                         continue;
                     }
 
+                    //remove probable duplicates within 7 days with user dialog
                     //get expenses from around this booking
                     DateTime from = exp.Booked.AddDays(-7);
                     DateTime to = exp.Booked.AddDays(+7);
@@ -77,47 +102,28 @@ namespace Expense_Overview.Account_Statements
                             && R.UsageText == exp.UsageText
                             && R.Value == exp.Value
                         ));
-
-
-
-
-
-
-
-
-
-
-                    /*
-                    //check for identical import text
-                    if (CurrentData.Expense.Where(R => R.ImportText == exp.ImportText).Count() > 0)
-                        toRemove.Add(exp);
-                    //check for identical
-                    else if (CurrentData.Expense.Where(R =>
-                            R.Booked == exp.Booked
-                            && R.ClientName == exp.ClientName
-                            && R.BookingText == exp.BookingText
-                            && R.UsageText == exp.UsageText
-                            && R.Value == exp.Value
-                        ).Count() > 0)
-                        toRemove.Add(exp);
-                    //check for similar booking within ±7 days
-                    else if (bookingsAround.Where(R =>
-                            R.ClientName == exp.ClientName
-                            && R.BookingText == exp.BookingText
-                            && R.UsageText == exp.UsageText
-                            && R.Value == exp.Value
-                        ).Count() > 0)
-                        toRemove.Add(exp);*/
                 }
 
+                if (exactDuplicates.Count > 0)
+                {
+                    string dupes = String.Join("\r\n", exactDuplicates.Select(R => R.ToString()).ToArray());
+                    if (MessageBox.Show($"The following {exactDuplicates.Count} expenses are exact (100%) duplicates.\r\nDo you want to remove them?\r\n{dupes}", "Duplicates", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                        foreach (var rem in exactDuplicates)
+                            Statement.Expenses.Remove(rem);//remove item
+                }
+                if (likelyDuplicates.Count > 0)
+                {
+                    string dupes = String.Join("\r\n", likelyDuplicates.Select(R => R.ToString()).ToArray());
+                    if (MessageBox.Show($"The following {likelyDuplicates.Count} expenses are likely (50%) duplicates.\r\nDo you want to remove them?\r\n{dupes}", "Duplicates", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                        foreach (var rem in likelyDuplicates)
+                            Statement.Expenses.Remove(rem);//remove item
+                }
                 if (probablyDuplicates.Count > 0)
                 {
                     string dupes = String.Join("\r\n", probablyDuplicates.Select(R => R.ToString()).ToArray());
-                    if (MessageBox.Show($"The following {probablyDuplicates.Count} expenses are probably duplicates.\r\nDo you want to remove them?\r\n{dupes}", "Duplicates", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
-                    {
+                    if (MessageBox.Show($"The following {probablyDuplicates.Count} expenses are probably (20%) duplicates.\r\nDo you want to remove them?\r\n{dupes}", "Duplicates", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                         foreach (var rem in probablyDuplicates)
                             Statement.Expenses.Remove(rem);//remove item
-                    }
                 }
                 return true;
             }

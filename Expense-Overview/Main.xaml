@@ -24,9 +24,12 @@
                     <DataGrid x:Name="DGExpenses" AutoGenerateColumns="False">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="ID" Binding="{Binding Id}" Visibility="Hidden"/>
+                            <DataGridTextColumn Header="Booked" Binding="{Binding Created, StringFormat=yyyy-MM-dd HH:mm}" Visibility="Hidden"/>
                             <DataGridTextColumn Header="Booked" Binding="{Binding Booked, StringFormat=yyyy-MM-dd HH:mm}"/>
+                            <DataGridTextColumn Header="Booked" Binding="{Binding Imported, StringFormat=yyyy-MM-dd HH:mm}" Visibility="Hidden"/>
                             <DataGridTextColumn Header="ClientName" Binding="{Binding ClientName}" />
-                            <DataGridTextColumn Header="BookingText" Binding="{Binding BookingText}" />
+                            <DataGridTextColumn Header="BookingText" Binding="{Binding BookingText}" Visibility="Hidden"/>
+                            <DataGridTextColumn Header="BookingText" Binding="{Binding UsageText}"/>
                             <DataGridTextColumn Header="Value" Binding="{Binding Value, StringFormat=0.00}" >
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
@@ -34,6 +37,9 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
+                            <DataGridTextColumn Header="BookingText" Binding="{Binding Currency}" Visibility="Hidden"/>
+                            <DataGridTextColumn Header="BookingText" Binding="{Binding Comment}" Visibility="Hidden"/>
+                            <DataGridTextColumn Header="BookingText" Binding="{Binding ImportText}" Visibility="Hidden"/>
                             <DataGridComboBoxColumn 
                                 Header="Type"
                                 x:Name="DGCBCExpenseTypes"
@@ -75,18 +81,36 @@
                 </DockPanel>
             </TabItem>
             <TabItem Header="Import">
-                <DockPanel HorizontalAlignment="Left">
-                    <DockPanel DockPanel.Dock="Top">
-                        <Button Content="Import" Padding="5"/>
-                        <Button Content="Save" Padding="5"/>
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Bottom">
+                        <Button x:Name="BTSaveImport" Content="Save to DB" Padding="5" DockPanel.Dock="Right" Click="BTSaveImport_Click"/>
+                        <Button x:Name="BTImport" Content="Import" Padding="5" DockPanel.Dock="Right" Click="BTImport_Click"/>
                         <Label />
                     </DockPanel>
                     <DataGrid x:Name="DGImport" d:ItemsSource="{d:SampleData ItemCount=10}" ScrollViewer.CanContentScroll="False" AutoGenerateColumns="False">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Booked" Binding="{Binding Booked}" />
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Visibility="Hidden"/>
+                            <DataGridTextColumn Header="Booked" Binding="{Binding Created, StringFormat=yyyy-MM-dd HH:mm}" Visibility="Hidden"/>
+                            <DataGridTextColumn Header="Booked" Binding="{Binding Booked, StringFormat=yyyy-MM-dd HH:mm}"/>
+                            <DataGridTextColumn Header="Booked" Binding="{Binding Imported, StringFormat=yyyy-MM-dd HH:mm}" Visibility="Hidden"/>
                             <DataGridTextColumn Header="ClientName" Binding="{Binding ClientName}" />
-                            <DataGridTextColumn Header="BookingText" Binding="{Binding BookingText}" />
-                            <DataGridTextColumn Header="Value" Binding="{Binding Value}" />
+                            <DataGridTextColumn Header="BookingText" Binding="{Binding BookingText}" Visibility="Hidden"/>
+                            <DataGridTextColumn Header="BookingText" Binding="{Binding UsageText}"/>
+                            <DataGridTextColumn Header="Value" Binding="{Binding Value, StringFormat=0.00}" >
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Right" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="BookingText" Binding="{Binding Currency}" Visibility="Hidden"/>
+                            <DataGridTextColumn Header="BookingText" Binding="{Binding Comment}" Visibility="Hidden"/>
+                            <DataGridTextColumn Header="BookingText" Binding="{Binding ImportText}" Visibility="Hidden"/>
+                            <DataGridComboBoxColumn 
+                                Header="Type"
+                                x:Name="DGCBCExpenseTypesImport"
+                                SelectedValueBinding="{Binding ExpenseType}">
+                            </DataGridComboBoxColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
