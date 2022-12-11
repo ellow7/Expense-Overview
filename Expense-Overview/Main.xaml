@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Expense_Overview"
         xmlns:syncfusion="http://schemas.syncfusion.com/wpf" x:Class="Expense_Overview.Main"
         mc:Ignorable="d"
-        Title="Expense Overview" Height="450" Width="981" Initialized="Window_Initialized" FontFamily="Consolas" FontSize="16">
+        Title="Expense Overview" Height="450" Width="981" Initialized="Window_Initialized" FontFamily="Consolas" FontSize="16" Closing="Window_Closing">
     <DockPanel>
         <TabControl HorizontalAlignment="Stretch" Width="NaN" Height="NaN" Margin="0,0,0,0" VerticalAlignment="Stretch">
             <TabItem Header="Expenses">
@@ -17,10 +17,11 @@
                         <Label Content="To:" Padding="5" />
                         <DatePicker x:Name="DPEndDate" Padding="5" SelectedDateChanged="SearchBoxes_TextChanged"/>
                         <Label Content="Search:" Padding="5" />
+                        <Button x:Name="BTSaveExpenses" Content="Save" Padding="5" DockPanel.Dock="Right" Click="BTSaveData_Click"/>
                         <Button x:Name="BTExportExpenses" Content="Export" Padding="5" Click="BTExportExpenses_Click" DockPanel.Dock="Right"/>
                         <TextBox VerticalContentAlignment="Center" x:Name="TBSearch"  TextChanged="SearchBoxes_TextChanged" />
                         </DockPanel>
-                    <DataGrid x:Name="DGExpenses" IsReadOnly="True">
+                    <DataGrid x:Name="DGExpenses" AutoGenerateColumns="False">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="ID" Binding="{Binding Id}" Visibility="Hidden"/>
                             <DataGridTextColumn Header="Booked" Binding="{Binding Booked, StringFormat=yyyy-MM-dd HH:mm}"/>
@@ -33,7 +34,42 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Type" Binding="{Binding ExpenseTypeName}"/>
+                            <DataGridComboBoxColumn 
+                                Header="Type"
+                                x:Name="DGCBCExpenseTypes"
+                                SelectedValueBinding="{Binding ExpenseType}">
+                            </DataGridComboBoxColumn><!--ItemsSource will be set in Code -->
+                            <DataGridTemplateColumn  Header="Remove">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button x:Name="BTRemoveExpense" Background="IndianRed" Click="BTRemoveExpense_Click">X
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Types">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Bottom">
+                        <Button x:Name="BTSaveTypes" Content="Save" Padding="5" DockPanel.Dock="Right" Click="BTSaveData_Click" />
+                        <Label />
+                    </DockPanel>
+                    <DataGrid x:Name="DGExpenseTypes" AutoGenerateColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Visibility="Visible"/>
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
+                            <DataGridTextColumn Header="Comment" Binding="{Binding Comment}" />
+                            <DataGridTemplateColumn  Header="Remove">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button x:Name="BTRemoveExpenseType" Background="IndianRed" Click="BTRemoveExpenseType_Click" >X
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -45,7 +81,7 @@
                         <Button Content="Save" Padding="5"/>
                         <Label />
                     </DockPanel>
-                    <DataGrid x:Name="DGImport" d:ItemsSource="{d:SampleData ItemCount=10}" ScrollViewer.CanContentScroll="False">
+                    <DataGrid x:Name="DGImport" d:ItemsSource="{d:SampleData ItemCount=10}" ScrollViewer.CanContentScroll="False" AutoGenerateColumns="False">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Booked" Binding="{Binding Booked}" />
                             <DataGridTextColumn Header="ClientName" Binding="{Binding ClientName}" />
@@ -55,9 +91,7 @@
                     </DataGrid>
                 </DockPanel>
             </TabItem>
-
             <TabItem Header="Settings"/>
-
         </TabControl>
 
     </DockPanel>

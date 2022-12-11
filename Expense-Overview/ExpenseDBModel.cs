@@ -18,16 +18,12 @@ namespace Expense_Overview
     1) update-database -TargetMigration:PREVIOUS_MIGRATION -verbose
     2) Remove migration file from folder Migrations
 
+
+
     */
 
     public class ExpenseDBModel : DbContext
     {
-        // Your context has been configured to use a 'ExpenseDBModel' connection string from your application's 
-        // configuration file (App.config or Web.config). By default, this connection string targets the 
-        // 'Expense_Overview.ExpenseDBModel' database on your LocalDb instance. 
-        // 
-        // If you wish to target a different database and/or database provider, modify the 'ExpenseDBModel' 
-        // connection string in the application configuration file.
         public ExpenseDBModel()
             : base("name=ExpenseDBModel")
         {
@@ -38,10 +34,6 @@ namespace Expense_Overview
             modelBuilder.Entity<Expense>().Property(m => m.Value).HasPrecision(18, 2);
         }
 
-        // Add a DbSet for each entity type that you want to include in your model. For more information 
-        // on configuring and using a Code First model, see http://go.microsoft.com/fwlink/?LinkId=390109.
-
-        // public virtual DbSet<MyEntity> MyEntities { get; set; }
         public DbSet<Expense> Expense { get; set; }
         public DbSet<ExpenseType> ExpenseType { get; set; }
     }
@@ -50,7 +42,13 @@ namespace Expense_Overview
     /// </summary>
     public class Expense
     {
-        public Expense() { }
+        public Expense()
+        {
+            Created = DateTime.Now;
+            Booked = DateTime.Now;
+            Imported = null;
+            ImportText = "Manually created";
+        }
         public Expense(DateTime? created, DateTime booked, DateTime? imported, string clientName, string bookingText, string usageText, decimal value, string currency, string comment, string importText, ExpenseType expenseType)
         {
             Created = created;
@@ -113,10 +111,6 @@ namespace Expense_Overview
         //FKs
         public virtual ExpenseType ExpenseType { get; set; }
 
-        //Helper
-        [NotMapped]
-        public string ExpenseTypeName { get { return ExpenseType?.Name; } }
-
     }
     /// <summary>
     /// What type of expense. E.g. groceries, car, toys
@@ -149,7 +143,7 @@ namespace Expense_Overview
         //Helper
         public override string ToString()
         {
-            return Name;
+            return this.Name;
         }
     }
 }

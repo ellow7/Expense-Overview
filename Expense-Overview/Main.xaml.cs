@@ -1,4 +1,5 @@
-﻿using ClosedXML.Excel;
+﻿using ClosedXML;
+using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Drawing.Charts;
 using Microsoft.Win32;
@@ -6,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data.Entity;
+using System.Data.Entity.Migrations;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -32,7 +34,6 @@ namespace Expense_Overview
         public Main()
         {
             InitializeComponent();
-            DGExpenses.AutoGenerateColumns = false;
         }
         private void insertDemoData()
         {
@@ -48,7 +49,7 @@ namespace Expense_Overview
                 tpHoliday = new ExpenseType("Holiday", "");
                 DB.ExpenseType.Add(tpHoliday);
             }
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 100; i++)
             {
                 var exp = new Expense();
                 exp.Value = rnd.Next(10, 1000) + rnd.Next(0, 100) / 100;
@@ -59,11 +60,10 @@ namespace Expense_Overview
                 DB.Expense.Add(exp);
             }
             DB.SaveChanges();
-
         }
         private void Window_Initialized(object sender, EventArgs e)
         {
-            insertDemoData();
+            //insertDemoData();
 
             var today = DateTime.Today;
             var firstDay = new DateTime(today.Year, today.Month, 1);
@@ -72,36 +72,56 @@ namespace Expense_Overview
             DPStartDate.SelectedDate = firstDay;
             DPEndDate.SelectedDate = lastDay;
 
-            LoadExpenses();
+            LoadData();
         }
-
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            //TODO: Check for pending changes
+            this.Focus();
+        }
         #region Expenses
-        private void LoadExpenses()
+        private void LoadData()
         {
-            LoadExpenses(DPStartDate.SelectedDate ?? DateTime.MinValue, DPEndDate.SelectedDate ?? DateTime.MaxValue);
+            LoadData(DPStartDate.SelectedDate ?? DateTime.MinValue, DPEndDate.SelectedDate ?? DateTime.MaxValue);
         }
-        private void LoadExpenses(DateTime start, DateTime end)
+        private void LoadData(DateTime start, DateTime end)
         {
-            DB.Expense.Load();
-            bool searchWithTextFilter = TBSearch.Text != "";
-            DGExpenses.ItemsSource = DB.Expense.Local.Where
-                (
-                    R => R.Booked >= start && R.Booked <= end && //date filtering
-                    !(
-                        searchWithTextFilter && //search box filtering
+            try
+            {
+                #region Expenses
+                DB.Expense.Load();
+                bool searchWithTextFilter = TBSearch.Text != "";
+                DGExpenses.ItemsSource = DB.Expense.Local.Where
+                    (
+                        R => R.Booked >= start && R.Booked <= end && //date filtering
                         !(
-                            R.Booked.ToString("yyyy-MM-dd HH:mm").Contains(TBSearch.Text.ToUpper()) ||
-                            (R.ClientName?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
-                            (R.BookingText?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
-                            (R.UsageText?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
-                            R.Value.ToString().Contains(TBSearch.Text.ToUpper()) ||
-                            (R.Comment?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
-                            (R.ExpenseType?.Name?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper())
+                            searchWithTextFilter && //search box filtering
+                            !(
+                                R.Booked.ToString("yyyy-MM-dd HH:mm").Contains(TBSearch.Text.ToUpper()) ||
+                                (R.ClientName?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
+                                (R.BookingText?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
+                                (R.UsageText?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
+                                R.Value.ToString().Contains(TBSearch.Text.ToUpper()) ||
+                                (R.Comment?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
+                                (R.ExpenseType?.Name?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper())
+                            )
                         )
-                    )
-                ).ToList();
+                    ).ToList();
+                //DGExpenses.Columns.FirstOrDefault().SortDirection = System.ComponentModel.ListSortDirection.Descending;
+                #endregion
 
-            DGExpenses.Columns.FirstOrDefault().SortDirection = System.ComponentModel.ListSortDirection.Descending;
+                #region ExpenseTypes
+                DB.ExpenseType.Load();
+                DGCBCExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id);//Combobox in Expenses
+                DGExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id);//Datagrid in ExpenseTypes
+                //DGExpenseTypes.Columns.FirstOrDefault().SortDirection = System.ComponentModel.ListSortDirection.Descending;
+                #endregion
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                LoadData();
+            }
         }
         private void BTExportExpenses_Click(object sender, RoutedEventArgs e)
         {
@@ -129,13 +149,13 @@ namespace Expense_Overview
                         R.ClientName,
                         R.BookingText,
                         R.Value,
-                        R.ExpenseTypeName
+                        R.ExpenseType.Name
                     }).ToList();
                 var header = data.FirstOrDefault().GetType().GetProperties().Select(R => R.Name);
 
                 //Set values
                 var headerCells = ws.Cell(1, 1).InsertData(header, true);
-                var dataCells = ws.Cell(2,1).InsertData(data);
+                var dataCells = ws.Cell(2, 1).InsertData(data);
 
                 //Format stuff
                 headerCells.Style.Font.Bold = true;
@@ -153,12 +173,67 @@ namespace Expense_Overview
 
         private void SearchBoxes_TextChanged(object sender, RoutedEventArgs e)
         {
-            LoadExpenses();
+            LoadData();
+        }
+        private void BTSaveData_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                this.Focus();
+                DB.SaveChanges();
+                LoadData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                LoadData();
+            }
+        }
+        private void BTRemoveExpense_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var toRemove = (Expense)DGExpenses.SelectedItem;
+                var res = MessageBox.Show("Are you sure you want to remove this expense?", "Sure?", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (res != MessageBoxResult.Yes)
+                    return;
+                DB.Expense.Remove(toRemove);
+                DB.SaveChanges();
+                LoadData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error removing item.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                LoadData();
+            }
+        }
+
+        private void BTRemoveExpenseType_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var toRemove = (ExpenseType)DGExpenseTypes.SelectedItem;
+                int amountExpenses = toRemove.Expenses?.Count ?? 0;
+                var res = MessageBox.Show($"Are you sure you want to remove this expense type?\r\nThere are {amountExpenses} using this type.", "Sure?", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (res != MessageBoxResult.Yes)
+                    return;
+                DB.ExpenseType.Remove(toRemove);
+                DB.SaveChanges();
+                LoadData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error removing item.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                LoadData();
+            }
         }
         #endregion
 
         #region Import
+        private bool import()
+        {
+            return false;
+        }
         #endregion
-
     }
 }
