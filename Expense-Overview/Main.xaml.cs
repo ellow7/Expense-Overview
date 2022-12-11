@@ -38,6 +38,10 @@ namespace Expense_Overview
         }
         private void insertDemoData()
         {
+            var res = MessageBox.Show("Are you sure you want to insert demo data?", "Insert Demo Data?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (res != MessageBoxResult.Yes)
+                return;
+
             var tpGroceries = DB.ExpenseType.Where(R => R.Name == "Groceries").FirstOrDefault();
             if (tpGroceries == null)
             {
@@ -115,7 +119,7 @@ namespace Expense_Overview
                 DB.ExpenseType.Load();
                 DGCBCExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id);//Combobox in Expenses
                 DGCBCExpenseTypesImport.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id);//Combobox in Import
-                DGExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id);//Datagrid in ExpenseTypes
+                DGExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id).ToList();//Datagrid in ExpenseTypes
                 //DGExpenseTypes.Columns.FirstOrDefault().SortDirection = System.ComponentModel.ListSortDirection.Descending;
                 #endregion
             }
@@ -273,5 +277,11 @@ namespace Expense_Overview
             }
         }
         #endregion
+
+        private void BTAddType_Click(object sender, RoutedEventArgs e)
+        {
+            DB.ExpenseType.Add(new ExpenseType());
+            BTSaveData_Click(this, null);
+        }
     }
 }

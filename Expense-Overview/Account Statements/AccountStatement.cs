@@ -40,11 +40,20 @@ namespace Expense_Overview.Account_Statements
                         continue;
                     }
 
-                    //likely matches with client name
-                    var likelyMatches = CurrentData.Expense.Where(R => R.ClientName == exp.ClientName).ToList();
+                    //likely matches with client name and trimmed usage text
+                    var trimmer = new Char[] { ' ', '.', ',', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+                    var likelyMatches = CurrentData.Expense.Local.Where(R => R.ClientName == exp.ClientName && R.UsageText.Trim(trimmer) == exp.UsageText.Trim(trimmer)).ToList();
                     if (likelyMatches.Any())
                     {
                         exp.ExpenseType = likelyMatches.Where(R => R.ExpenseType != null).OrderByDescending(R => R.Booked).FirstOrDefault()?.ExpenseType ?? null;
+                        continue;
+                    }
+
+                    //probable matches with client name - better than nothing
+                    var probableMatches = CurrentData.Expense.Where(R => R.ClientName == exp.ClientName).ToList();
+                    if (probableMatches.Any())
+                    {
+                        exp.ExpenseType = probableMatches.Where(R => R.ExpenseType != null).OrderByDescending(R => R.Booked).FirstOrDefault()?.ExpenseType ?? null;
                         continue;
                     }
 
