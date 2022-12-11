@@ -30,7 +30,7 @@ namespace Expense_Overview
     /// </summary>
     public partial class Main : Window
     {
-        public ExpenseDBModel DB = new ExpenseDBModel();
+        public ExpenseDBModel DB;
         private Random rnd = new Random();
         public Main()
         {
@@ -68,6 +68,7 @@ namespace Expense_Overview
         }
         private void Window_Initialized(object sender, EventArgs e)
         {
+            DB = new ExpenseDBModel();
             //insertDemoData();
 
             var today = DateTime.Today;
@@ -76,8 +77,6 @@ namespace Expense_Overview
             var lastDay = firstDayNextMonth.AddDays(-1);
             DPStartDate.SelectedDate = firstDay;
             DPEndDate.SelectedDate = lastDay;
-
-            LoadData();
         }
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
@@ -93,9 +92,11 @@ namespace Expense_Overview
         {
             try
             {
+                DB = new ExpenseDBModel();
                 #region Expenses
                 DB.Expense.Load();
                 bool searchWithTextFilter = TBSearch.Text != "";
+                DGExpenses.ItemsSource = null;
                 DGExpenses.ItemsSource = DB.Expense.Local.Where
                     (
                         R => R.Booked >= start && R.Booked <= end && //date filtering
@@ -117,8 +118,11 @@ namespace Expense_Overview
 
                 #region ExpenseTypes
                 DB.ExpenseType.Load();
+                DGCBCExpenseTypes.ItemsSource = null;
                 DGCBCExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id);//Combobox in Expenses
+                DGCBCExpenseTypesImport.ItemsSource = null;
                 DGCBCExpenseTypesImport.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id);//Combobox in Import
+                DGExpenseTypes.ItemsSource = null;
                 DGExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id).ToList();//Datagrid in ExpenseTypes
                 //DGExpenseTypes.Columns.FirstOrDefault().SortDirection = System.ComponentModel.ListSortDirection.Descending;
                 #endregion
@@ -126,7 +130,6 @@ namespace Expense_Overview
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                LoadData();
             }
         }
         private void BTExportExpenses_Click(object sender, RoutedEventArgs e)
@@ -280,8 +283,91 @@ namespace Expense_Overview
 
         private void BTAddType_Click(object sender, RoutedEventArgs e)
         {
+            try { 
             DB.ExpenseType.Add(new ExpenseType());
-            BTSaveData_Click(this, null);
+            DB.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error adding type.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            LoadData();
         }
+
+        #region Settings
+        private void BTBackupDB_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                SaveFileDialog sfd = new SaveFileDialog();
+                sfd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                sfd.RestoreDirectory = true;
+                sfd.Filter = "Backup (*.bak)|*.bak";
+                string timestamp = DateTime.Now.ToString("yyyy MM dd");
+                sfd.FileName = $"{timestamp} Backup Expense DB.bak";
+
+                if (sfd.ShowDialog() ?? false)
+                {
+                    var success = DB.Backup(sfd.FileName);
+                    if (!success)
+                        MessageBox.Show($"Error writing backup.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    else
+                        MessageBox.Show($"Backup successful.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    LoadData();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error writing backup.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void BTRestoreDB_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var res = MessageBox.Show("Are you sure you want to restore?\r\nThis will wipe the current database!", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (res != MessageBoxResult.Yes)
+                    return;
+
+                OpenFileDialog ofd = new OpenFileDialog();
+                ofd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                ofd.RestoreDirectory = true;
+                ofd.Filter = "Backup (*.bak)|*.bak";
+
+                if (ofd.ShowDialog() ?? false)
+                {
+                    var success = DB.Restore(ofd.FileName);
+                    if (!success)
+                        MessageBox.Show($"Error restoring backup.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    else
+                        MessageBox.Show($"Restore successful.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    LoadData();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error writing backup.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void BTWipeDB_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var res = MessageBox.Show("Are you sure you want to wipe the database?\r\nThis will wipe the current database!", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (res != MessageBoxResult.Yes)
+                    return;
+                var success = DB.Wipe();
+                if (!success)
+                    MessageBox.Show($"Error wiping.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                else
+                    MessageBox.Show($"Wipe successful.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                LoadData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error wiping.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        #endregion
     }
 }

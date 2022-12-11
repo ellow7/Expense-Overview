@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
+using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Reflection.Emit;
 
@@ -24,18 +26,64 @@ namespace Expense_Overview
 
     public class ExpenseDBModel : DbContext
     {
-        public ExpenseDBModel()
-            : base("name=ExpenseDBModel")
+        public ExpenseDBModel() : base("name=ExpenseDBModel")
         {
-            Database.SetInitializer<ExpenseDBModel>(new CreateDatabaseIfNotExists<ExpenseDBModel>());
+            //this.Database.CommandTimeout = 2;
         }
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Expense>().Property(m => m.Value).HasPrecision(18, 2);
+            //modelBuilder.Entity<Expense>().Property(m => m.Value).HasPrecision(18, 2);
         }
 
         public DbSet<Expense> Expense { get; set; }
         public DbSet<ExpenseType> ExpenseType { get; set; }
+
+
+
+
+
+
+
+        public bool Backup(string filepath)
+        {
+            this.Database.ExecuteSqlCommand(
+                TransactionalBehavior.DoNotEnsureTransaction,
+                @"
+                    BACKUP DATABASE ExpenseDB
+                    TO DISK = @file
+                    WITH INIT
+                "
+            , new SqlParameter("@file", filepath));
+            return new FileInfo(filepath).Exists;
+        }
+        public bool Restore(string filepath)
+        {
+            if (!new FileInfo(filepath).Exists)
+                return false;
+            this.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction, 
+                @"USE master");
+            this.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction, 
+                @"ALTER DATABASE ExpenseDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
+            this.Database.ExecuteSqlCommand(
+                TransactionalBehavior.DoNotEnsureTransaction,
+                @"USE master
+                    RESTORE DATABASE ExpenseDB
+                    FROM DISK = @file
+                "
+            , new SqlParameter("@file", filepath));
+            return true;
+        }
+        public bool Wipe()
+        {
+            //Don't hate me
+            //this.Database.ExecuteSqlCommand(@"DELETE FROM Expenses");
+            //this.Database.ExecuteSqlCommand(@"DELETE FROM ExpenseTypes");
+            Expense.RemoveRange(Expense);
+            ExpenseType.RemoveRange(ExpenseType);
+            SaveChanges();
+
+            return true;
+        }
     }
     /// <summary>
     /// What expenses were booked when and why
