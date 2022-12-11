@@ -13,6 +13,11 @@ namespace Expense_Overview
     add-migration
     update-database -verbose
     update-database -TargetMigration:Init -verbose
+
+    Remove migration:
+    1) update-database -TargetMigration:PREVIOUS_MIGRATION -verbose
+    2) Remove migration file from folder Migrations
+
     */
 
     public class ExpenseDBModel : DbContext
@@ -30,23 +35,23 @@ namespace Expense_Overview
         }
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Expenses>().Property(m => m.Value).HasPrecision(18, 2);
+            modelBuilder.Entity<Expense>().Property(m => m.Value).HasPrecision(18, 2);
         }
 
         // Add a DbSet for each entity type that you want to include in your model. For more information 
         // on configuring and using a Code First model, see http://go.microsoft.com/fwlink/?LinkId=390109.
 
         // public virtual DbSet<MyEntity> MyEntities { get; set; }
-        public DbSet<Expenses> Expenses { get; set; }
-        public DbSet<ExpenseTypes> ExpenseTypes { get; set; }
+        public DbSet<Expense> Expense { get; set; }
+        public DbSet<ExpenseType> ExpenseType { get; set; }
     }
     /// <summary>
     /// What expenses were booked when and why
     /// </summary>
-    public class Expenses
+    public class Expense
     {
-        public Expenses() { }
-        public Expenses(DateTime? created, DateTime booked, DateTime? imported, string clientName, string bookingText, string usageText, decimal value, string currency, string comment, string importText, ExpenseTypes expenseTypes)
+        public Expense() { }
+        public Expense(DateTime? created, DateTime booked, DateTime? imported, string clientName, string bookingText, string usageText, decimal value, string currency, string comment, string importText, ExpenseType expenseType)
         {
             Created = created;
             Booked = booked;
@@ -58,7 +63,7 @@ namespace Expense_Overview
             Currency = currency;
             Comment = comment;
             ImportText = importText;
-            ExpenseTypes = expenseTypes;
+            ExpenseType = expenseType;
         }
 
         [Key]
@@ -104,20 +109,22 @@ namespace Expense_Overview
         /// (mostly for debugging and documentation)
         /// </summary>
         public string ImportText { get; set; }
-        [NotMapped]
-        public string ExpenseTypeName { get { return ExpenseTypes?.Name; } }
 
         //FKs
-        public virtual ExpenseTypes ExpenseTypes { get; set; }
+        public virtual ExpenseType ExpenseType { get; set; }
+
+        //Helper
+        [NotMapped]
+        public string ExpenseTypeName { get { return ExpenseType?.Name; } }
 
     }
     /// <summary>
     /// What type of expense. E.g. groceries, car, toys
     /// </summary>
-    public class ExpenseTypes
+    public class ExpenseType
     {
-        public ExpenseTypes() { }
-        public ExpenseTypes(string name, string comment)
+        public ExpenseType() { }
+        public ExpenseType(string name, string comment)
         {
             Name = name;
             Comment = comment;
@@ -128,15 +135,21 @@ namespace Expense_Overview
         /// <summary>
         /// Well... The name of the type
         /// </summary>
-        [StringLength(450)]
+        [StringLength(450)]//unique needs max length of 450
         [Index(IsUnique = true)]
         public string Name { get; set; }
         /// <summary>
-        /// Commens are always good
+        /// Comments are always good
         /// </summary>
         public string Comment { get; set; }
 
         //FKs
-        public virtual ICollection<Expenses> Expenses { get; set; }
+        public virtual ICollection<Expense> Expenses { get; set; }
+
+        //Helper
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }
