@@ -6,28 +6,34 @@
         xmlns:local="clr-namespace:Expense_Overview"
         xmlns:syncfusion="http://schemas.syncfusion.com/wpf" x:Class="Expense_Overview.Main"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="981" Initialized="Window_Initialized" FontFamily="Consolas" FontSize="16">
+        Title="Expense Overview" Height="450" Width="981" Initialized="Window_Initialized" FontFamily="Consolas" FontSize="16">
     <DockPanel>
         <TabControl HorizontalAlignment="Stretch" Width="NaN" Height="NaN" Margin="0,0,0,0" VerticalAlignment="Stretch">
             <TabItem Header="Expenses">
                 <DockPanel>
-                    <DockPanel DockPanel.Dock="Top">
+                    <DockPanel DockPanel.Dock="Bottom">
                         <Label Content="From:" Padding="5" />
-                        <DatePicker x:Name="DPStartDate" Padding="5" />
+                        <DatePicker x:Name="DPStartDate" Padding="5" SelectedDateChanged="SearchBoxes_TextChanged" />
                         <Label Content="To:" Padding="5" />
-                        <DatePicker x:Name="DPEndDate" Padding="5" />
-                        <Button x:Name="BTLoadExpenses" Content="Load" Padding="5" Click="BTLoadExpenses_Click"/>
-                        <Button x:Name="BTSaveExpenses" Content="Save" Padding="5" Click="BTSaveExpenses_Click"/>
-                        <Label />
-                    </DockPanel>
-                    <DataGrid x:Name="DGExpenses">
+                        <DatePicker x:Name="DPEndDate" Padding="5" SelectedDateChanged="SearchBoxes_TextChanged"/>
+                        <Label Content="Search:" Padding="5" />
+                        <Button x:Name="BTExportExpenses" Content="Export" Padding="5" Click="BTExportExpenses_Click" DockPanel.Dock="Right"/>
+                        <TextBox VerticalContentAlignment="Center" x:Name="TBSearch"  TextChanged="SearchBoxes_TextChanged" />
+                        </DockPanel>
+                    <DataGrid x:Name="DGExpenses" IsReadOnly="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Booked" Binding="{Binding Booked}" SortDirection="Descending"/>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Visibility="Hidden"/>
+                            <DataGridTextColumn Header="Booked" Binding="{Binding Booked, StringFormat=yyyy-MM-dd HH:mm}"/>
                             <DataGridTextColumn Header="ClientName" Binding="{Binding ClientName}" />
                             <DataGridTextColumn Header="BookingText" Binding="{Binding BookingText}" />
-                            <DataGridTextColumn Header="Value" Binding="{Binding Value}" />
-                            <DataGridTextColumn Header="TypeName" Binding="{Binding ExpenseTypeName}" IsReadOnly="True"/>
-                            <DataGridComboBoxColumn x:Name="DGCBCTypeSelector" Header="Type" SelectedItemBinding="{Binding ExpenseType.Name}"/>
+                            <DataGridTextColumn Header="Value" Binding="{Binding Value, StringFormat=0.00}" >
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="HorizontalAlignment" Value="Right" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Type" Binding="{Binding ExpenseTypeName}"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>

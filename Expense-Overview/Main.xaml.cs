@@ -1,8 +1,13 @@
-﻿using DocumentFormat.OpenXml.Bibliography;
+﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.Drawing.Charts;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data.Entity;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -73,23 +78,80 @@ namespace Expense_Overview
         #region Expenses
         private void LoadExpenses()
         {
-            LoadExpenses(DPStartDate.SelectedDate.Value, DPEndDate.SelectedDate.Value);
+            LoadExpenses(DPStartDate.SelectedDate ?? DateTime.MinValue, DPEndDate.SelectedDate ?? DateTime.MaxValue);
         }
-        private void LoadExpenses (DateTime start, DateTime end)
+        private void LoadExpenses(DateTime start, DateTime end)
         {
-            //DGExpenses.ItemsSource = DB.Expense.Where(R => R.Booked >= start && R.Booked <= end);//not working
-            //DGExpenses.ItemsSource = null;
-            DGExpenses.ItemsSource = DB.Expense.Where(R => R.Booked >= start && R.Booked <= end).OrderByDescending(R=>R.Booked).ToList();
+            DB.Expense.Load();
+            bool searchWithTextFilter = TBSearch.Text != "";
+            DGExpenses.ItemsSource = DB.Expense.Local.Where
+                (
+                    R => R.Booked >= start && R.Booked <= end && //date filtering
+                    !(
+                        searchWithTextFilter && //search box filtering
+                        !(
+                            R.Booked.ToString("yyyy-MM-dd HH:mm").Contains(TBSearch.Text.ToUpper()) ||
+                            (R.ClientName?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
+                            (R.BookingText?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
+                            (R.UsageText?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
+                            R.Value.ToString().Contains(TBSearch.Text.ToUpper()) ||
+                            (R.Comment?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
+                            (R.ExpenseType?.Name?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper())
+                        )
+                    )
+                ).ToList();
 
             DGExpenses.Columns.FirstOrDefault().SortDirection = System.ComponentModel.ListSortDirection.Descending;
-
-            DGCBCTypeSelector.ItemsSource = DB.ExpenseType.Select(R=>R.Name).ToList();
         }
-        private void BTSaveExpenses_Click(object sender, RoutedEventArgs e)
+        private void BTExportExpenses_Click(object sender, RoutedEventArgs e)
         {
+            SaveFileDialog sfd = new SaveFileDialog();
+            sfd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            sfd.RestoreDirectory = true;
+            sfd.Filter = "Excel file (*.xlsx)|*.xlsx";
+            string start = (DPStartDate.SelectedDate ?? DateTime.MinValue).ToString("yyyy-MM-dd");
+            string end = (DPEndDate.SelectedDate ?? DateTime.MaxValue).ToString("yyyy-MM-dd");
+            string filter = TBSearch.Text;
+            if (filter != "")
+                filter = " Filter " + filter;
+            sfd.FileName = $"Expense Export {start} - {end}{filter}.xlsx";
+
+            if (sfd.ShowDialog() ?? false)
+            {
+                var wb = new XLWorkbook();
+                var ws = wb.AddWorksheet("Expense export");
+
+                //Get data
+                var data = (DGExpenses.ItemsSource as List<Expense>)
+                    .Select(R => new
+                    {
+                        R.Booked,
+                        R.ClientName,
+                        R.BookingText,
+                        R.Value,
+                        R.ExpenseTypeName
+                    }).ToList();
+                var header = data.FirstOrDefault().GetType().GetProperties().Select(R => R.Name);
+
+                //Set values
+                var headerCells = ws.Cell(1, 1).InsertData(header, true);
+                var dataCells = ws.Cell(2,1).InsertData(data);
+
+                //Format stuff
+                headerCells.Style.Font.Bold = true;
+                headerCells.Style.Fill.BackgroundColor = XLColor.LightGray;
+                headerCells.Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
+                headerCells.Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
+                dataCells.Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
+                dataCells.Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
+                ws.Columns().AdjustToContents();
+
+                //Save - duh
+                wb.SaveAs(sfd.FileName);
+            }
         }
 
-        private void BTLoadExpenses_Click(object sender, RoutedEventArgs e)
+        private void SearchBoxes_TextChanged(object sender, RoutedEventArgs e)
         {
             LoadExpenses();
         }
