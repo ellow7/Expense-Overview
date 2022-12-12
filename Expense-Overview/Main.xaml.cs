@@ -4,11 +4,13 @@ using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Drawing.Charts;
 using Expense_Overview.Account_Statements;
 using Microsoft.Win32;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -35,41 +37,16 @@ namespace Expense_Overview
         public Main()
         {
             InitializeComponent();
-        }
-        private void insertDemoData()
-        {
-            var res = MessageBox.Show("Are you sure you want to insert demo data?", "Insert Demo Data?", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (res != MessageBoxResult.Yes)
-                return;
 
-            var tpGroceries = DB.ExpenseType.Where(R => R.Name == "Groceries").FirstOrDefault();
-            if (tpGroceries == null)
-            {
-                tpGroceries = new ExpenseType("Groceries", "");
-                DB.ExpenseType.Add(tpGroceries);
-            }
-            var tpHoliday = DB.ExpenseType.Where(R => R.Name == "Holiday").FirstOrDefault();
-            if (tpHoliday == null)
-            {
-                tpHoliday = new ExpenseType("Holiday", "");
-                DB.ExpenseType.Add(tpHoliday);
-            }
-            for (int i = 0; i < 100; i++)
-            {
-                var exp = new Expense();
-                exp.Value = rnd.Next(10, 1000) + rnd.Next(0, 100) / 100;
-                exp.ClientName = "Peter Pan Holidays " + i;
-                exp.BookingText = "Neverland Holiday 2022";
-                exp.Booked = DateTime.Now.AddDays(-rnd.Next(0, 365));
-                exp.ExpenseType = tpHoliday;
-                DB.Expense.Add(exp);
-            }
-            DB.SaveChanges();
+            //apply settings
+            TBAutoBackupPath.Text = Properties.Settings.Default.BackupPath;
+
+            DoAutoBackup();//monthly backup
         }
+        
         private void Window_Initialized(object sender, EventArgs e)
         {
             DB = new ExpenseDBModel();
-            //insertDemoData();
 
             var today = DateTime.Today;
             var firstDay = new DateTime(today.Year, today.Month, 1);
@@ -283,9 +260,10 @@ namespace Expense_Overview
 
         private void BTAddType_Click(object sender, RoutedEventArgs e)
         {
-            try { 
-            DB.ExpenseType.Add(new ExpenseType());
-            DB.SaveChanges();
+            try
+            {
+                DB.ExpenseType.Add(new ExpenseType());
+                DB.SaveChanges();
             }
             catch (Exception ex)
             {
@@ -295,6 +273,50 @@ namespace Expense_Overview
         }
 
         #region Settings
+        private void TBAutoBackupPath_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            Properties.Settings.Default.BackupPath = TBAutoBackupPath.Text;
+            Properties.Settings.Default.Save();
+        }
+        private void BTBrowseBackupPath_Click(object sender, RoutedEventArgs e)
+        {
+            var cofd = new CommonOpenFileDialog();
+            cofd.IsFolderPicker = true;
+            cofd.Multiselect = false;
+            cofd.EnsurePathExists = true;
+            cofd.RestoreDirectory = false;
+            if (TBAutoBackupPath.Text != "")
+                cofd.DefaultDirectory = TBAutoBackupPath.Text;
+            else
+                cofd.DefaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+            if (cofd.ShowDialog() == CommonFileDialogResult.Ok)
+                TBAutoBackupPath.Text = cofd.FileName;
+        }
+        /// <summary>
+        /// Automatically backup each month
+        /// </summary>
+        private void DoAutoBackup()
+        {
+            string timestamp = DateTime.Now.ToString("yyyy MM");
+            string filename = $"{timestamp} Backup Expense DB.bak";
+            string directory = TBAutoBackupPath.Text;
+            if (directory == "")
+                return;//no backup wanted
+            if (Directory.Exists(directory))
+            {
+                var file = new FileInfo(System.IO.Path.Combine(directory, filename));
+                if (file.Exists)
+                    return;//already done backup
+                var success = DB.Backup(file.FullName);
+                if (!success)
+                    MessageBox.Show($"Error writing backup.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                else
+                    MessageBox.Show($"Backup successful.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+                MessageBox.Show("Backup directory not accessible:\r\n" + directory, "Backup Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
         private void BTBackupDB_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -368,6 +390,41 @@ namespace Expense_Overview
                 MessageBox.Show($"Error wiping.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        private void BTInsertDemoData_Click(object sender, RoutedEventArgs e)
+        {
+            InsertDemoData();
+        }
+        private void InsertDemoData()
+        {
+            var res = MessageBox.Show("Are you sure you want to insert demo data?", "Insert Demo Data?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (res != MessageBoxResult.Yes)
+                return;
+
+            var tpGroceries = DB.ExpenseType.Where(R => R.Name == "Groceries").FirstOrDefault();
+            if (tpGroceries == null)
+            {
+                tpGroceries = new ExpenseType("Groceries", "");
+                DB.ExpenseType.Add(tpGroceries);
+            }
+            var tpHoliday = DB.ExpenseType.Where(R => R.Name == "Holiday").FirstOrDefault();
+            if (tpHoliday == null)
+            {
+                tpHoliday = new ExpenseType("Holiday", "");
+                DB.ExpenseType.Add(tpHoliday);
+            }
+            for (int i = 0; i < 100; i++)
+            {
+                var exp = new Expense();
+                exp.Value = rnd.Next(10, 1000) + rnd.Next(0, 100) / 100;
+                exp.ClientName = "Peter Pan Holidays " + i;
+                exp.BookingText = "Neverland Holiday 2022";
+                exp.Booked = DateTime.Now.AddDays(-rnd.Next(0, 365));
+                exp.ExpenseType = tpHoliday;
+                DB.Expense.Add(exp);
+            }
+            DB.SaveChanges();
+        }
         #endregion
+
     }
 }

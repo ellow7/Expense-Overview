@@ -38,12 +38,6 @@ namespace Expense_Overview
         public DbSet<Expense> Expense { get; set; }
         public DbSet<ExpenseType> ExpenseType { get; set; }
 
-
-
-
-
-
-
         public bool Backup(string filepath)
         {
             this.Database.ExecuteSqlCommand(

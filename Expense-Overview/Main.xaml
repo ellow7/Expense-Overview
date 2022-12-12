@@ -49,7 +49,7 @@
                             <DataGridTemplateColumn  Header="Remove">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button x:Name="BTRemoveExpense" Background="IndianRed" Click="BTRemoveExpense_Click">X
+                                        <Button x:Name="BTRemoveExpense" Background="Firebrick" Click="BTRemoveExpense_Click">X
                                         </Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -108,7 +108,7 @@
                             <DataGridTemplateColumn  Header="Remove">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button x:Name="BTRemoveExpenseType" Background="IndianRed" Click="BTRemoveExpenseType_Click" >X
+                                        <Button x:Name="BTRemoveExpenseType" Background="Firebrick" Click="BTRemoveExpenseType_Click" >X
                                         </Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -117,13 +117,34 @@
                     </DataGrid>
                 </DockPanel>
             </TabItem>
-            <TabItem Header="Settings" Height="23" VerticalAlignment="Bottom">
-                <DockPanel>
-                    <Button x:Name="BTBackupDB" Content="Backup DB" Padding="6" Click="BTBackupDB_Click" />
-                    <Button x:Name="BTRestoreDB" Content="Restore DB" Padding="6" Click="BTRestoreDB_Click" />
-                    <Button x:Name="BTWipeDB" Content="Wipe DB" Background="IndianRed" Padding="6" Click="BTWipeDB_Click" />
-                    <Label />
-                </DockPanel>
+            <TabItem Header="Settings">
+                <StackPanel>
+                    <DockPanel>
+                        <Button x:Name="BTBrowseBackupPath" DockPanel.Dock="Right" Content="Browse" Padding="6" Click="BTBrowseBackupPath_Click" />
+
+                        <Label Content="Auto Backup Path:" Width="170"/>
+                        <TextBox x:Name="TBAutoBackupPath" TextChanged="TBAutoBackupPath_TextChanged"/>
+                    </DockPanel>
+                    <!--<DockPanel>
+                        <Label Content="Auto Backup:"  Width="170"/>
+                        <CheckBox VerticalAlignment="Center">
+                            <CheckBox.LayoutTransform>
+                                <ScaleTransform ScaleX="1.5" ScaleY="1.5" />
+                            </CheckBox.LayoutTransform>
+                        </CheckBox>
+                    </DockPanel>-->
+                    <Label Height="20"/>
+                    <DockPanel>
+                        <Button x:Name="BTBackupDB" Content="Backup DB" Background="ForestGreen" Padding="6" Click="BTBackupDB_Click" />
+                        <Button x:Name="BTRestoreDB" Content="Restore DB"  Background="DarkOrange" Padding="6" Click="BTRestoreDB_Click" />
+                        <Button x:Name="BTWipeDB" Content="Wipe DB" Background="Firebrick" Padding="6" Click="BTWipeDB_Click" />
+                        <Label />
+                    </DockPanel>
+                    <DockPanel>
+                        <Button x:Name="BTInsertDemoData" Content="Insert Demo Data" Padding="6" Click="BTInsertDemoData_Click"  />
+                        <Label />
+                    </DockPanel>
+                </StackPanel>
             </TabItem>
         </TabControl>
     </DockPanel>
