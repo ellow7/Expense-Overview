@@ -195,7 +195,7 @@ namespace Expense_Overview
         //Helper
         public override string ToString()
         {
-            return Name;
+            return DisplayPosition + " " + Name;
         }
     }
 }

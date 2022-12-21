@@ -93,11 +93,11 @@ namespace Expense_Overview
                 #region ExpenseTypes
                 DB.ExpenseType.Load();
                 DGCBCExpenseTypes.ItemsSource = null;
-                DGCBCExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id);//Combobox in Expenses
+                DGCBCExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.DisplayPosition);//Combobox in Expenses
                 DGCBCExpenseTypesImport.ItemsSource = null;
-                DGCBCExpenseTypesImport.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id);//Combobox in Import
+                DGCBCExpenseTypesImport.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.DisplayPosition);//Combobox in Import
                 DGExpenseTypes.ItemsSource = null;
-                DGExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.Id).ToList();//Datagrid in ExpenseTypes
+                DGExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.DisplayPosition).ToList();//Datagrid in ExpenseTypes
                 //DGExpenseTypes.Columns.FirstOrDefault().SortDirection = System.ComponentModel.ListSortDirection.Descending;
                 #endregion
             }
@@ -130,9 +130,10 @@ namespace Expense_Overview
                     {
                         R.Booked,
                         R.ClientName,
-                        R.BookingText,
+                        R.UsageText,
                         R.Value,
-                        R.ExpenseType.Name
+                        R.Comment,
+                        Type = R.ExpenseType?.Name
                     }).ToList();
                 var header = data.FirstOrDefault().GetType().GetProperties().Select(R => R.Name);
 
