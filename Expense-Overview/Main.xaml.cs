@@ -38,9 +38,6 @@ namespace Expense_Overview
         {
             InitializeComponent();
 
-            //apply settings
-            TBAutoBackupPath.Text = Properties.Settings.Default.BackupPath;
-
             DoAutoBackup();//monthly backup
         }
         private void Window_Initialized(object sender, EventArgs e)
@@ -57,6 +54,7 @@ namespace Expense_Overview
             //TODO: Check for pending changes
             this.Focus();
         }
+
         #region Expenses
         private void LoadData()
         {
@@ -66,6 +64,10 @@ namespace Expense_Overview
         {
             try
             {
+                //apply settings
+                TBAutoBackupPath.Text = Properties.Settings.Default.BackupPath;
+                TBImportExportPath.Text = Properties.Settings.Default.ImportExportPath;
+
                 DB = new ExpenseDBModel();
                 #region Expenses
                 DB.Expense.Load();
@@ -109,7 +111,10 @@ namespace Expense_Overview
         private void BTExportExpenses_Click(object sender, RoutedEventArgs e)
         {
             SaveFileDialog sfd = new SaveFileDialog();
-            sfd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            if (Properties.Settings.Default.ImportExportPath == "" || !new DirectoryInfo(Properties.Settings.Default.ImportExportPath).Exists)
+                sfd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            else
+                sfd.InitialDirectory = Properties.Settings.Default.ImportExportPath;
             sfd.RestoreDirectory = true;
             sfd.Filter = "Excel file (*.xlsx)|*.xlsx";
             string start = (DPStartDate.SelectedDate ?? DateTime.MinValue).ToString("yyyy-MM-dd");
@@ -121,6 +126,8 @@ namespace Expense_Overview
 
             if (sfd.ShowDialog() ?? false)
             {
+                Properties.Settings.Default.ImportExportPath = new FileInfo(sfd.FileName).DirectoryName;
+                Properties.Settings.Default.Save();
                 var wb = new XLWorkbook();
                 var ws = wb.AddWorksheet("Expense export");
 
@@ -135,7 +142,7 @@ namespace Expense_Overview
                         R.Comment,
                         Type = R.ExpenseType?.Name
                     }).ToList();
-                var header = data.FirstOrDefault().GetType().GetProperties().Select(R => R.Name);
+                var header = data.FirstOrDefault()?.GetType().GetProperties().Select(R => R.Name) ?? new List<string> { "No data" };
 
                 //Set values
                 var headerCells = ws.Cell(1, 1).InsertData(header, true);
@@ -146,15 +153,17 @@ namespace Expense_Overview
                 headerCells.Style.Fill.BackgroundColor = XLColor.LightGray;
                 headerCells.Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
                 headerCells.Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
-                dataCells.Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
-                dataCells.Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
+                if (data.Count > 0)
+                {
+                    dataCells.Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
+                    dataCells.Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
+                }
                 ws.Columns().AdjustToContents();
 
                 //Save - duh
                 wb.SaveAs(sfd.FileName);
             }
         }
-
         private void SearchBoxes_TextChanged(object sender, RoutedEventArgs e)
         {
             LoadData();
@@ -191,7 +200,22 @@ namespace Expense_Overview
                 LoadData();
             }
         }
+        #endregion
 
+        #region Types
+        private void BTAddType_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                DB.ExpenseType.Add(new ExpenseType());
+                DB.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error adding type.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            LoadData();
+        }
         private void BTRemoveExpenseType_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -224,8 +248,8 @@ namespace Expense_Overview
                 import = new DibaStatement();//change this if you implemented new types
                 import.ReadImport();
                 importHandler = new AccountStatementHandler(import, DB);
-                importHandler.RemoveDuplicates();
                 importHandler.GuessExpenseTypes();
+                importHandler.RemoveDuplicates();
 
                 DGImport.ItemsSource = importHandler.Statement.Expenses;
             }
@@ -256,27 +280,14 @@ namespace Expense_Overview
         }
         #endregion
 
-        private void BTAddType_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                DB.ExpenseType.Add(new ExpenseType());
-                DB.SaveChanges();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error adding type.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            LoadData();
-        }
-
         #region Settings
+        #region Backup Stuff
         private void TBAutoBackupPath_TextChanged(object sender, TextChangedEventArgs e)
         {
             Properties.Settings.Default.BackupPath = TBAutoBackupPath.Text;
             Properties.Settings.Default.Save();
         }
-        private void BTBrowseBackupPath_Click(object sender, RoutedEventArgs e)
+        private void BTBrowseAutoBackupPath_Click(object sender, RoutedEventArgs e)
         {
             var cofd = new CommonOpenFileDialog();
             cofd.IsFolderPicker = true;
@@ -393,6 +404,32 @@ namespace Expense_Overview
                 MessageBox.Show($"Error wiping.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        #endregion
+
+        #region Import Export Path
+        private void TBImportExportPath_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            Properties.Settings.Default.ImportExportPath = TBImportExportPath.Text;
+            Properties.Settings.Default.Save();
+        }
+        private void BTBrowseImportExportPath_Click(object sender, RoutedEventArgs e)
+        {
+            var cofd = new CommonOpenFileDialog();
+            cofd.IsFolderPicker = true;
+            cofd.Multiselect = false;
+            cofd.EnsurePathExists = true;
+            cofd.RestoreDirectory = false;
+            if (TBImportExportPath.Text != "")
+                cofd.DefaultDirectory = TBImportExportPath.Text;
+            else
+                cofd.DefaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+            if (cofd.ShowDialog() == CommonFileDialogResult.Ok)
+                TBImportExportPath.Text = cofd.FileName;
+        }
+        #endregion
+
+        #region Demo Data Stuff
         private void BTInsertDemoData_Click(object sender, RoutedEventArgs e)
         {
             InsertDemoData();
@@ -520,6 +557,7 @@ namespace Expense_Overview
             DB.SaveChanges();
             LoadData();
         }
+        #endregion
         #endregion
     }
 }

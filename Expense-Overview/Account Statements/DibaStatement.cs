@@ -17,19 +17,22 @@ namespace Expense_Overview.Account_Statements
     {
         private List<Expense> expenses;
         public List<Expense> Expenses { get { return expenses; } }
-        public string ImportExtension { get { return ".csv"; } }
         public bool ReadImport()
         {
             expenses = new List<Expense>();
             try
             {
                 OpenFileDialog ofd = new OpenFileDialog();
-                ofd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                ofd.RestoreDirectory = true;
-                ofd.Filter = $"DIBA Import (*{ImportExtension})|*{ImportExtension}";
+                if (Properties.Settings.Default.ImportExportPath == "" || !new DirectoryInfo(Properties.Settings.Default.ImportExportPath).Exists)
+                    ofd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                else
+                    ofd.InitialDirectory = Properties.Settings.Default.ImportExportPath;
+                ofd.Filter = $"DIBA Import (*.csv)|*.csv";
 
                 if (ofd.ShowDialog() ?? false && new FileInfo(ofd.FileName).Exists)
                 {
+                    Properties.Settings.Default.ImportExportPath = new FileInfo(ofd.FileName).DirectoryName;
+                    Properties.Settings.Default.Save();
                     var now = DateTime.Now;
                     #region If we used some kind of excel format...
                     //var wb = new XLWorkbook(ofd.FileName);

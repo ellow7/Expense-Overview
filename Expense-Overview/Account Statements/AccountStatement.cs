@@ -11,7 +11,6 @@ namespace Expense_Overview.Account_Statements
     public interface AccountStatement
     {
         List<Expense> Expenses { get; }
-        string ImportExtension { get; }
         bool ReadImport();
     }
     public class AccountStatementHandler
@@ -37,6 +36,7 @@ namespace Expense_Overview.Account_Statements
                     if (exactMatches.Any())
                     {
                         exp.ExpenseType = exactMatches.Where(R => R.ExpenseType != null).OrderByDescending(R => R.Booked).FirstOrDefault()?.ExpenseType ?? null;
+                        exp.Comment = exactMatches.Where(R => R.ExpenseType != null).OrderByDescending(R => R.Booked).FirstOrDefault()?.Comment ?? "";
                         continue;
                     }
 
@@ -79,10 +79,10 @@ namespace Expense_Overview.Account_Statements
                 foreach (var exp in Statement.Expenses)
                 {
                     //remove exact duplicates via import text
-                    var exactDuplicate = CurrentData.Expense.Where(R => R.ImportText == exp.ImportText).FirstOrDefault();
-                    if (exactDuplicate != null)
+                    var exactDuplicate = CurrentData.Expense.Where(R => R.ImportText == exp.ImportText);
+                    if (exactDuplicate.Count() > 0)
                     {
-                        exactDuplicates.Add(exactDuplicate);
+                        exactDuplicates.AddRange(exactDuplicate);
                         continue;
                     }
 
@@ -115,24 +115,24 @@ namespace Expense_Overview.Account_Statements
 
                 if (exactDuplicates.Count > 0)
                 {
-                    string dupes = String.Join("\r\n", exactDuplicates.Select(R => R.ToString()).ToArray());
+                    string dupes = String.Join("\r\n", exactDuplicates.Select(R => R.ToString()).Take(30).ToArray());
                     if (MessageBox.Show($"The following {exactDuplicates.Count} expenses are exact (100%) duplicates.\r\nDo you want to remove them?\r\n{dupes}", "Duplicates", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                         foreach (var rem in exactDuplicates)
-                            Statement.Expenses.Remove(rem);//remove item
+                            CurrentData.Expense.Remove(rem);//remove item
                 }
                 if (likelyDuplicates.Count > 0)
                 {
-                    string dupes = String.Join("\r\n", likelyDuplicates.Select(R => R.ToString()).ToArray());
+                    string dupes = String.Join("\r\n", likelyDuplicates.Select(R => R.ToString()).Take(20).ToArray());
                     if (MessageBox.Show($"The following {likelyDuplicates.Count} expenses are likely (50%) duplicates.\r\nDo you want to remove them?\r\n{dupes}", "Duplicates", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                         foreach (var rem in likelyDuplicates)
-                            Statement.Expenses.Remove(rem);//remove item
+                            CurrentData.Expense.Remove(rem);//remove item
                 }
                 if (probablyDuplicates.Count > 0)
                 {
-                    string dupes = String.Join("\r\n", probablyDuplicates.Select(R => R.ToString()).ToArray());
+                    string dupes = String.Join("\r\n", probablyDuplicates.Select(R => R.ToString()).Take(20).ToArray());
                     if (MessageBox.Show($"The following {probablyDuplicates.Count} expenses are probably (20%) duplicates.\r\nDo you want to remove them?\r\n{dupes}", "Duplicates", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                         foreach (var rem in probablyDuplicates)
-                            Statement.Expenses.Remove(rem);//remove item
+                            CurrentData.Expense.Remove(rem);//remove item
                 }
                 return true;
             }

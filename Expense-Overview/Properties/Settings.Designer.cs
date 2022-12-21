@@ -34,5 +34,17 @@ namespace Expense_Overview.Properties {
                 this["BackupPath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ImportExportPath {
+            get {
+                return ((string)(this["ImportExportPath"]));
+            }
+            set {
+                this["ImportExportPath"] = value;
+            }
+        }
     }
 }

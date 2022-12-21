@@ -121,11 +121,16 @@
             <TabItem Header="Settings">
                 <StackPanel>
                     <DockPanel>
-                        <Button x:Name="BTBrowseBackupPath" DockPanel.Dock="Right" Content="Browse" Padding="6" Click="BTBrowseBackupPath_Click" />
-
-                        <Label Content="Auto Backup Path:" Width="170"/>
-                        <TextBox x:Name="TBAutoBackupPath" TextChanged="TBAutoBackupPath_TextChanged"/>
+                        <Button x:Name="BTBrowseAutoBackupPath" DockPanel.Dock="Right" Content="Browse" Padding="6" Click="BTBrowseAutoBackupPath_Click" />
+                        <Label Content="Auto Backup Path:" Width="180"/>
+                        <TextBox x:Name="TBAutoBackupPath" TextChanged="TBAutoBackupPath_TextChanged" VerticalContentAlignment="Center"/>
+                       </DockPanel>
+                    <DockPanel>
+                        <Button x:Name="BTBrowseImportExportPath" DockPanel.Dock="Right" Content="Browse" Padding="6" Click="BTBrowseImportExportPath_Click" />
+                        <Label Content="Import Export Path:" Width="180"/>
+                        <TextBox x:Name="TBImportExportPath" TextChanged="TBImportExportPath_TextChanged" VerticalContentAlignment="Center"/>
                     </DockPanel>
+
                     <!--<DockPanel>
                         <Label Content="Auto Backup:"  Width="170"/>
                         <CheckBox VerticalAlignment="Center">
