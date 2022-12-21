@@ -182,6 +182,10 @@
     <Compile Include="Migrations\202211201241241_Rename to singular.designer.cs">
       <DependentUpon>202211201241241_Rename to singular.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202212211134224_Display position for ordering types.cs" />
+    <Compile Include="Migrations\202212211134224_Display position for ordering types.designer.cs">
+      <DependentUpon>202212211134224_Display position for ordering types.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
@@ -207,6 +211,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202211201241241_Rename to singular.resx">
       <DependentUpon>202211201241241_Rename to singular.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202212211134224_Display position for ordering types.resx">
+      <DependentUpon>202212211134224_Display position for ordering types.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

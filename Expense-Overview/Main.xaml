@@ -142,6 +142,7 @@
                     </DockPanel>
                     <DockPanel>
                         <Button x:Name="BTInsertDemoData" Content="Insert Demo Data" Padding="6" Click="BTInsertDemoData_Click"  />
+                        <Button x:Name="BTRemoveDemoData" Content="Remove Demo Data" Padding="6" Click="BTRemoveDemoData_Click"  />
                         <Label />
                     </DockPanel>
                 </StackPanel>

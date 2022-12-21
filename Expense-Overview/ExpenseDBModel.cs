@@ -184,6 +184,11 @@ namespace Expense_Overview
         /// </summary>
         public string Comment { get; set; }
 
+        /// <summary>
+        /// Display position for ordering types
+        /// </summary>
+        public int DisplayPosition { get; set; }
+
         //FKs
         public virtual ICollection<Expense> Expenses { get; set; }
 

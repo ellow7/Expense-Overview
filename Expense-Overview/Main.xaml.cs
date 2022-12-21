@@ -32,7 +32,7 @@ namespace Expense_Overview
     /// </summary>
     public partial class Main : Window
     {
-        public ExpenseDBModel DB;
+        public ExpenseDBModel DB = new ExpenseDBModel();
         private Random rnd = new Random();
         public Main()
         {
@@ -43,11 +43,8 @@ namespace Expense_Overview
 
             DoAutoBackup();//monthly backup
         }
-        
         private void Window_Initialized(object sender, EventArgs e)
         {
-            DB = new ExpenseDBModel();
-
             var today = DateTime.Today;
             var firstDay = new DateTime(today.Year, today.Month, 1);
             var firstDayNextMonth = firstDay.AddMonths(1);
@@ -89,7 +86,7 @@ namespace Expense_Overview
                                 (R.ExpenseType?.Name?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper())
                             )
                         )
-                    ).ToList();
+                    ).OrderByDescending(R => R.Booked).ToList();
                 //DGExpenses.Columns.FirstOrDefault().SortDirection = System.ComponentModel.ListSortDirection.Descending;
                 #endregion
 
@@ -298,6 +295,8 @@ namespace Expense_Overview
         /// </summary>
         private void DoAutoBackup()
         {
+            if (DB.Expense.Count() == 0)
+                return;//no data no backup
             string timestamp = DateTime.Now.ToString("yyyy MM");
             string filename = $"{timestamp} Backup Expense DB.bak";
             string directory = TBAutoBackupPath.Text;
@@ -322,10 +321,13 @@ namespace Expense_Overview
             try
             {
                 SaveFileDialog sfd = new SaveFileDialog();
-                sfd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                if (TBAutoBackupPath.Text == "" || !new DirectoryInfo(TBAutoBackupPath.Text).Exists)
+                    sfd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                else
+                    sfd.InitialDirectory = TBAutoBackupPath.Text;
                 sfd.RestoreDirectory = true;
                 sfd.Filter = "Backup (*.bak)|*.bak";
-                string timestamp = DateTime.Now.ToString("yyyy MM dd");
+                string timestamp = DateTime.Now.ToString("yyyy MM");
                 sfd.FileName = $"{timestamp} Backup Expense DB.bak";
 
                 if (sfd.ShowDialog() ?? false)
@@ -412,19 +414,111 @@ namespace Expense_Overview
                 tpHoliday = new ExpenseType("Holiday", "");
                 DB.ExpenseType.Add(tpHoliday);
             }
+            var tpFun = DB.ExpenseType.Where(R => R.Name == "Fun Activities").FirstOrDefault();
+            if (tpFun == null)
+            {
+                tpFun = new ExpenseType("Fun Activities", "");
+                DB.ExpenseType.Add(tpFun);
+            }
+            var tpInternet = DB.ExpenseType.Where(R => R.Name == "Internet").FirstOrDefault();
+            if (tpInternet == null)
+            {
+                tpInternet = new ExpenseType("Internet", "");
+                DB.ExpenseType.Add(tpInternet);
+            }
+            var tpIncome = DB.ExpenseType.Where(R => R.Name == "Income").FirstOrDefault();
+            if (tpIncome == null)
+            {
+                tpIncome = new ExpenseType("Income", "");
+                DB.ExpenseType.Add(tpIncome);
+            }
             for (int i = 0; i < 100; i++)
             {
                 var exp = new Expense();
-                exp.Value = rnd.Next(10, 1000) + rnd.Next(0, 100) / 100;
-                exp.ClientName = "Peter Pan Holidays " + i;
-                exp.BookingText = "Neverland Holiday 2022";
-                exp.Booked = DateTime.Now.AddDays(-rnd.Next(0, 365));
-                exp.ExpenseType = tpHoliday;
+                exp.Value = -(decimal)rnd.Next(10, 1000) + (decimal)rnd.Next(0, 100) / 100;
+                exp.ClientName = "Peter Pan Holidays";
+                exp.UsageText = "Neverland Holiday " + i;
+                exp.Comment = "Demo Data";
+                exp.Booked = DateTime.Now.AddDays(-rnd.Next(0, 365)).AddMinutes(rnd.Next(0, 60 * 24));
+                if (rnd.Next(10) > 5)
+                    exp.ExpenseType = tpHoliday;
+                else
+                    exp.ExpenseType = tpFun;
+                DB.Expense.Add(exp);
+            }
+            for (int i = 0; i < 100; i++)
+            {
+                var exp = new Expense();
+                exp.Value = -(decimal)rnd.Next(10, 150) + (decimal)rnd.Next(0, 100) / 100;
+                exp.ClientName = "Grocery Store";
+                exp.UsageText = "Grocery Shopping " + i;
+                exp.Comment = "Demo Data";
+                exp.Booked = DateTime.Now.AddDays(-rnd.Next(0, 365)).AddMinutes(rnd.Next(0, 60 * 24));
+                exp.ExpenseType = tpGroceries;
+                DB.Expense.Add(exp);
+            }
+            for (int i = 0; i < 14; i++)
+            {
+                var exp = new Expense();
+                exp.Value = -69.69M;
+                exp.ClientName = "Internet Provider";
+                exp.UsageText = "Your Internet for this month";
+                exp.Comment = "Demo Data";
+                exp.Booked = DateTime.Now.AddMonths(-i).AddMinutes(rnd.Next(0, 60 * 24));
+                exp.ExpenseType = tpInternet;
+                DB.Expense.Add(exp);
+            }
+            for (int i = 0; i < 14; i++)
+            {
+                var exp = new Expense();
+                exp.Value = 1234.56M;
+                exp.ClientName = "Your Employer";
+                exp.UsageText = "Salary";
+                exp.Comment = "Demo Data";
+                exp.Booked = DateTime.Now.AddMonths(-i).AddMinutes(rnd.Next(0, 60 * 24));
+                exp.ExpenseType = tpIncome;
+                DB.Expense.Add(exp);
+            }
+            for (int i = 0; i < 14; i++)
+            {
+                var exp = new Expense();
+                exp.Value = -69.69M;
+                exp.ClientName = "Internet Provider";
+                exp.UsageText = "Your Internet for this month";
+                exp.Comment = "Demo Data";
+                exp.Booked = DateTime.Now.AddMonths(-i);
+                exp.ExpenseType = tpInternet;
+                DB.Expense.Add(exp);
+            }
+            for (int i = 0; i < 10; i++)
+            {
+                var exp = new Expense();
+                exp.Value = -(decimal)rnd.Next(1, 5) + (decimal)rnd.Next(0, 100) / 100;
+                exp.ClientName = "Credit Card Company";
+                exp.UsageText = "Non-dubious booking " + i;
+                exp.Comment = "Demo Data";
+                exp.Booked = DateTime.Now.AddDays(-rnd.Next(0, 365)).AddMinutes(rnd.Next(0, 60 * 24));
                 DB.Expense.Add(exp);
             }
             DB.SaveChanges();
+            LoadData();
+        }
+        private void BTRemoveDemoData_Click(object sender, RoutedEventArgs e)
+        {
+            RemoveDemoData();
+        }
+        private void RemoveDemoData()
+        {
+            var res = MessageBox.Show("Are you sure you want to remove demo data?", "Remove Demo Data?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (res != MessageBoxResult.Yes)
+                return;
+
+            DB.Expense.Load();
+            var remove = DB.Expense.Where(R => R.Comment == "Demo Data").ToList();
+            DB.Expense.RemoveRange(remove);
+            DB.SaveChanges();
+            LoadData();
         }
         #endregion
-
     }
 }
