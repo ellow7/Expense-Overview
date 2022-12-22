@@ -2,6 +2,7 @@
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Drawing.Charts;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Expense_Overview.Account_Statements;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
@@ -43,11 +44,18 @@ namespace Expense_Overview
         private void Window_Initialized(object sender, EventArgs e)
         {
             var today = DateTime.Today;
-            var firstDay = new DateTime(today.Year, today.Month, 1);
-            var firstDayNextMonth = firstDay.AddMonths(1);
-            var lastDay = firstDayNextMonth.AddDays(-1);
-            DPStartDate.SelectedDate = firstDay;
-            DPEndDate.SelectedDate = lastDay;
+
+            var firstDayThisMonth = new DateTime(today.Year, today.Month, 1);
+            var firstDayNextMonth = firstDayThisMonth.AddMonths(1);
+            var firstDayLastMonth = firstDayThisMonth.AddMonths(-1);
+            var lastDayThisMonth = firstDayNextMonth.AddDays(-1);
+
+            var firstDayThisYear = new DateTime(today.Year, 1, 1);
+            var firstDayNextYear = new DateTime(today.Year + 1, 1, 1);
+            var lastDayThisYear = firstDayNextYear.AddDays(-1);
+
+            DPStartDate.SelectedDate = firstDayThisYear;
+            DPEndDate.SelectedDate = lastDayThisYear;
         }
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
@@ -85,11 +93,10 @@ namespace Expense_Overview
                                 (R.UsageText?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
                                 R.Value.ToString().Contains(TBSearch.Text.ToUpper()) ||
                                 (R.Comment?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper()) ||
-                                (R.ExpenseType?.Name?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper())
+                                (R.ExpenseType?.ToString()?.ToUpper() ?? "").Contains(TBSearch.Text.ToUpper())
                             )
                         )
                     ).OrderByDescending(R => R.Booked).ToList();
-                //DGExpenses.Columns.FirstOrDefault().SortDirection = System.ComponentModel.ListSortDirection.Descending;
                 #endregion
 
                 #region ExpenseTypes
@@ -100,7 +107,6 @@ namespace Expense_Overview
                 DGCBCExpenseTypesImport.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.DisplayPosition);//Combobox in Import
                 DGExpenseTypes.ItemsSource = null;
                 DGExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.DisplayPosition).ToList();//Datagrid in ExpenseTypes
-                //DGExpenseTypes.Columns.FirstOrDefault().SortDirection = System.ComponentModel.ListSortDirection.Descending;
                 #endregion
             }
             catch (Exception ex)
@@ -129,38 +135,61 @@ namespace Expense_Overview
                 Properties.Settings.Default.ImportExportPath = new FileInfo(sfd.FileName).DirectoryName;
                 Properties.Settings.Default.Save();
                 var wb = new XLWorkbook();
-                var ws = wb.AddWorksheet("Expense export");
 
+                #region Data
+                var wsData = wb.AddWorksheet("Expense data");
                 //Get data
-                var data = (DGExpenses.ItemsSource as List<Expense>)
+                var data = (DGExpenses.ItemsSource as List<Expense>).OrderBy(R => R.Booked)
                     .Select(R => new
                     {
                         R.Booked,
+                        BookedMonth = R.Booked.Month,
+                        BookedYear = R.Booked.Year,
                         R.ClientName,
                         R.UsageText,
                         R.Value,
                         R.Comment,
                         Type = R.ExpenseType?.Name
                     }).ToList();
-                var header = data.FirstOrDefault()?.GetType().GetProperties().Select(R => R.Name) ?? new List<string> { "No data" };
 
                 //Set values
-                var headerCells = ws.Cell(1, 1).InsertData(header, true);
-                var dataCells = ws.Cell(2, 1).InsertData(data);
+                var dataCells = wsData.Cell(1, 1).InsertTable(data);
+                wsData.Columns().AdjustToContents();
+                #endregion
 
-                //Format stuff
-                headerCells.Style.Font.Bold = true;
-                headerCells.Style.Fill.BackgroundColor = XLColor.LightGray;
-                headerCells.Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
-                headerCells.Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
-                if (data.Count > 0)
-                {
-                    dataCells.Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
-                    dataCells.Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
-                }
-                ws.Columns().AdjustToContents();
+                #region Pivot
+                var wsPivot = wb.AddWorksheet("Pivot");
 
-                //Save - duh
+                var pt = wsPivot.PivotTables.Add("PivotTable", wsData.Cell(1, 1), dataCells.AsRange());
+                var ptType = pt.RowLabels.Add("Type");
+                var ptYear = pt.ColumnLabels.Add("BookedYear");
+                var ptMonth = pt.ColumnLabels.Add("BookedMonth");
+                var ptValue = pt.Values.Add("Value");
+
+                ptYear.SetSort(XLPivotSortType.Ascending);
+                ptMonth.SetSort(XLPivotSortType.Ascending);
+                //ptValue.ShowAsPercentageOfColumn();
+
+                wsPivot.SetTabActive(true);
+
+                //pt.AutofitColumns = true;//not working
+                //pt.SetAutofitColumns(true);//not working
+                //wsPivot.Columns().AdjustToContents();//not working
+
+                //workaround not working
+                //wb.SaveAs(sfd.FileName);
+                //wb = new XLWorkbook(sfd.FileName);
+                //wsPivot = wb.Worksheet(wsPivot.Name);
+
+                //color scale not working
+                //var ptRange = wsPivot.Range("$1:$1048576");
+                ////ptRange.Style.NumberFormat.Format = "0.00";//memory leak?
+                //ptRange.AddConditionalFormat().ColorScale()
+                //  .Minimum(XLCFContentType.Number, -5000, XLColor.Red)
+                //  .Midpoint(XLCFContentType.Percent, 50, XLColor.Yellow)
+                //  .Maximum(XLCFContentType.Number, 5000, XLColor.Green);
+                #endregion
+
                 wb.SaveAs(sfd.FileName);
 
                 var res = MessageBox.Show("Export successfull.\r\nOpen file?", "Open file?", MessageBoxButton.YesNo, MessageBoxImage.Question);

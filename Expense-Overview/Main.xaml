@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Expense_Overview"
         xmlns:syncfusion="http://schemas.syncfusion.com/wpf" x:Class="Expense_Overview.Main"
         mc:Ignorable="d"
-        Title="Expense Overview" Height="450" Width="981" Initialized="Window_Initialized" FontFamily="Consolas" FontSize="16" Closing="Window_Closing">
+        Title="Expense Overview" Height="450" Width="981" Initialized="Window_Initialized" FontFamily="Consolas" FontSize="16" Closing="Window_Closing" WindowState="Maximized">
     <DockPanel>
         <TabControl HorizontalAlignment="Stretch" Width="NaN" Height="NaN" Margin="0,0,0,0" VerticalAlignment="Stretch">
             <TabItem Header="Expenses">
