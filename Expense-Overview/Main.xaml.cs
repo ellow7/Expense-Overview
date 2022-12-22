@@ -162,6 +162,10 @@ namespace Expense_Overview
 
                 //Save - duh
                 wb.SaveAs(sfd.FileName);
+
+                var res = MessageBox.Show("Export successfull.\r\nOpen file?", "Open file?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (res == MessageBoxResult.Yes)
+                    System.Diagnostics.Process.Start(sfd.FileName);
             }
         }
         private void SearchBoxes_TextChanged(object sender, RoutedEventArgs e)
