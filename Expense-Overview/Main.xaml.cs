@@ -149,7 +149,7 @@ namespace Expense_Overview
                         R.UsageText,
                         R.Value,
                         R.Comment,
-                        Type = R.ExpenseType?.Name
+                        Type = R.ExpenseType?.ToString()
                     }).ToList();
 
                 //Set values
@@ -166,6 +166,7 @@ namespace Expense_Overview
                 var ptMonth = pt.ColumnLabels.Add("BookedMonth");
                 var ptValue = pt.Values.Add("Value");
 
+                ptType.SetSort(XLPivotSortType.Ascending);
                 ptYear.SetSort(XLPivotSortType.Ascending);
                 ptMonth.SetSort(XLPivotSortType.Ascending);
                 //ptValue.ShowAsPercentageOfColumn();
