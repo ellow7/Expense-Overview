@@ -186,6 +186,10 @@
     <Compile Include="Migrations\202212211134224_Display position for ordering types.designer.cs">
       <DependentUpon>202212211134224_Display position for ordering types.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202212271552097_Deprecitation.cs" />
+    <Compile Include="Migrations\202212271552097_Deprecitation.designer.cs">
+      <DependentUpon>202212271552097_Deprecitation.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
@@ -214,6 +218,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202212211134224_Display position for ordering types.resx">
       <DependentUpon>202212211134224_Display position for ordering types.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202212271552097_Deprecitation.resx">
+      <DependentUpon>202212271552097_Deprecitation.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

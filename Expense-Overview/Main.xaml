@@ -54,6 +54,39 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
+                            <DataGridTemplateColumn  Header="Deprecitation">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button x:Name="BTAddDeprecitation" Background="DodgerBlue" Click="BTAddDeprecitation_Click" >Add
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Types">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Bottom">
+                        <Button x:Name="BTSaveTypes" Content="Save" Padding="6" DockPanel.Dock="Right" Click="BTSaveData_Click" />
+                        <Button x:Name="BTAddType" Content="Add" Padding="6" DockPanel.Dock="Right" Click="BTAddType_Click" />
+                        <Label />
+                    </DockPanel>
+                    <DataGrid x:Name="DGExpenseTypes" d:ItemsSource="{d:SampleData ItemCount=10}" AutoGenerateColumns="False" CanUserAddRows="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Visibility="Hidden"/>
+                            <DataGridTextColumn Header="Position" Binding="{Binding DisplayPosition, StringFormat=0}"/>
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
+                            <DataGridTextColumn Header="Comment" Binding="{Binding Comment}" />
+                            <DataGridTemplateColumn  Header="Remove">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button x:Name="BTRemoveExpenseType" Background="Firebrick" Click="BTRemoveExpenseType_Click" >X
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -89,31 +122,6 @@
                                 x:Name="DGCBCExpenseTypesImport"
                                 SelectedValueBinding="{Binding ExpenseType}">
                             </DataGridComboBoxColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </DockPanel>
-            </TabItem>
-            <TabItem Header="Types">
-                <DockPanel>
-                    <DockPanel DockPanel.Dock="Bottom">
-                        <Button x:Name="BTSaveTypes" Content="Save" Padding="6" DockPanel.Dock="Right" Click="BTSaveData_Click" />
-                        <Button x:Name="BTAddType" Content="Add" Padding="6" DockPanel.Dock="Right" Click="BTAddType_Click" />
-                        <Label />
-                    </DockPanel>
-                    <DataGrid x:Name="DGExpenseTypes" d:ItemsSource="{d:SampleData ItemCount=10}" AutoGenerateColumns="False" CanUserAddRows="False">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Visibility="Hidden"/>
-                            <DataGridTextColumn Header="Position" Binding="{Binding DisplayPosition, StringFormat=0}"/>
-                            <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
-                            <DataGridTextColumn Header="Comment" Binding="{Binding Comment}" />
-                            <DataGridTemplateColumn  Header="Remove">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button x:Name="BTRemoveExpenseType" Background="Firebrick" Click="BTRemoveExpenseType_Click" >X
-                                        </Button>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>

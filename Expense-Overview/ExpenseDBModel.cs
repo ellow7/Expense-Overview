@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,14 +12,19 @@ using System.Reflection.Emit;
 namespace Expense_Overview
 {
     /*
-    enable-migrations
+    enable-migrations <- run once
     add-migration
-    update-database -verbose
-    update-database -TargetMigration:Init -verbose
+    update-database
 
     Remove migration:
-    1) update-database -TargetMigration:PREVIOUS_MIGRATION -verbose
+    1) update-database -TargetMigration:'PREVIOUS_MIGRATION'
     2) Remove migration file from folder Migrations
+    Example:
+    update-database -TargetMigration:'Display position for ordering types'
+
+
+
+
 
 
 
@@ -26,18 +32,28 @@ namespace Expense_Overview
 
     public class ExpenseDBModel : DbContext
     {
-        public ExpenseDBModel() : base("name=ExpenseDBModel")
-        {
-            //this.Database.CommandTimeout = 2;
-        }
+        public ExpenseDBModel() : base("name=ExpenseDBModel") { }
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            //modelBuilder.Entity<Expense>().Property(m => m.Value).HasPrecision(18, 2);
+            //One to zero or one relationship Expense -> Deprecitation
+            modelBuilder.Entity<Expense>()
+                .HasOptional(R => R.InitialDeprecitation)
+                .WithRequired(R => R.InitialExpense);
+
+            //One to many relationship (gets too complicated for EF6)
+            modelBuilder.Entity<Expense>()
+                .HasOptional<Deprecitation>(R => R.Deprecitation)
+                .WithMany(R => R.DeprecitationExpenses);
+                //.HasForeignKey(R => R.Id);
         }
 
+        #region Tables
         public DbSet<Expense> Expense { get; set; }
         public DbSet<ExpenseType> ExpenseType { get; set; }
+        public DbSet<Deprecitation> Deprecitation { get; set; }
+        #endregion
 
+        #region Helpful methods
         public bool Backup(string filepath)
         {
             this.Database.ExecuteSqlCommand(
@@ -54,9 +70,9 @@ namespace Expense_Overview
         {
             if (!new FileInfo(filepath).Exists)
                 return false;
-            this.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction, 
+            this.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction,
                 @"USE master");
-            this.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction, 
+            this.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction,
                 @"ALTER DATABASE ExpenseDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
             this.Database.ExecuteSqlCommand(
                 TransactionalBehavior.DoNotEnsureTransaction,
@@ -70,14 +86,14 @@ namespace Expense_Overview
         public bool Wipe()
         {
             //Don't hate me
-            //this.Database.ExecuteSqlCommand(@"DELETE FROM Expenses");
-            //this.Database.ExecuteSqlCommand(@"DELETE FROM ExpenseTypes");
             Expense.RemoveRange(Expense);
             ExpenseType.RemoveRange(ExpenseType);
+            Deprecitation.RemoveRange(Deprecitation);
             SaveChanges();
 
             return true;
         }
+        #endregion
     }
     /// <summary>
     /// What expenses were booked when and why
@@ -152,6 +168,8 @@ namespace Expense_Overview
 
         //FKs
         public virtual ExpenseType ExpenseType { get; set; }
+        public virtual Deprecitation InitialDeprecitation { get; set; }
+        public virtual Deprecitation Deprecitation { get; set; }
 
         //Helper
         public override string ToString()
@@ -197,5 +215,38 @@ namespace Expense_Overview
         {
             return DisplayPosition + " " + Name;
         }
+    }
+
+    /// <summary>
+    /// Linear deprecitations of expenses.
+    /// E.g. Split the purchase of a car to expenses over 10 years.
+    /// </summary>
+    public class Deprecitation
+    {
+        public Deprecitation() { }
+        [Key]
+        public int Id { get; set; }
+        /// <summary>
+        /// Initial value of the expense
+        /// (We need this because we set the initial expense costs to 0)
+        /// </summary>
+        public decimal Value { get; set; }
+        /// <summary>
+        /// How long we want to depreciate
+        /// </summary>
+        public int DurationMonths { get; set; }
+
+        public string Comment { get; set; }
+
+        //FKs
+        /// <summary>
+        /// What we want to split into deprecitations
+        /// </summary>
+        [Required]
+        public virtual Expense InitialExpense { get; set; }
+        /// <summary>
+        /// All the generated deprecitation costs
+        /// </summary>
+        public virtual ICollection<Expense> DeprecitationExpenses { get; set; }
     }
 }

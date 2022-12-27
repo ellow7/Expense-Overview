@@ -108,6 +108,10 @@ namespace Expense_Overview
                 DGExpenseTypes.ItemsSource = null;
                 DGExpenseTypes.ItemsSource = DB.ExpenseType.Local.OrderBy(R => R.DisplayPosition).ToList();//Datagrid in ExpenseTypes
                 #endregion
+
+                #region Depricitations
+                DB.Deprecitation.Load();
+                #endregion
             }
             catch (Exception ex)
             {
@@ -231,6 +235,70 @@ namespace Expense_Overview
             catch (Exception ex)
             {
                 MessageBox.Show($"Error removing item.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                LoadData();
+            }
+        }
+
+
+
+
+
+        private void BTAddDeprecitation_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                throw new NotImplementedException();
+                var expense = (Expense)DGExpenses.SelectedItem;
+                if (expense.Deprecitation != null)
+                    ;//TODO
+
+                Deprecitation depr = DB.Deprecitation.Where(R => R.InitialExpense.Id == expense.Id).FirstOrDefault();
+
+                if (depr == null)
+                {
+                    //create new
+                    depr = new Deprecitation();
+                    depr.Value = expense.Value;
+                    depr.InitialExpense = expense;
+
+                    DB.Deprecitation.Add(depr);
+                }
+
+                //TODO Dialog
+
+                depr.DurationMonths = 12;
+                depr.Comment = expense.Comment;
+                depr.DeprecitationExpenses = new List<Expense>();
+                decimal singleExpense = -5;//Math.Floor(depr.Value / depr.DurationMonths);
+                decimal remainingExpense = depr.Value;//e.g. -1.800€
+                DateTime bookingCounter = new DateTime(expense.Booked.Year, expense.Booked.Month, 1).AddMonths(1).Date;
+
+                while (remainingExpense < 0)
+                {
+                    var exp = new Expense();
+                    if (remainingExpense <= singleExpense)
+                        exp.Value = singleExpense;
+                    else
+                        exp.Value = remainingExpense;
+                    exp.ClientName = expense.ClientName;
+                    exp.UsageText = expense.UsageText;
+                    exp.Comment = "Deprecitation " + expense.Comment;
+                    exp.ExpenseType = expense.ExpenseType;
+                    exp.Booked = bookingCounter;
+
+                    DB.Expense.Add(exp);
+                    depr.DeprecitationExpenses.Add(exp);
+                    bookingCounter = bookingCounter.AddMonths(1);
+                        remainingExpense -= singleExpense;
+                }
+                expense.Value = 0;
+
+                DB.SaveChanges();
+                LoadData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error adding deprecitation.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 LoadData();
             }
         }
@@ -592,6 +660,8 @@ namespace Expense_Overview
             LoadData();
         }
         #endregion
+
         #endregion
+
     }
 }
