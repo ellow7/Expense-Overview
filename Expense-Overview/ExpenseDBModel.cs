@@ -44,7 +44,7 @@ namespace Expense_Overview
             modelBuilder.Entity<Expense>()
                 .HasOptional<Deprecitation>(R => R.Deprecitation)
                 .WithMany(R => R.DeprecitationExpenses);
-                //.HasForeignKey(R => R.Id);
+            //.HasForeignKey(R => R.Id);
         }
 
         #region Tables
@@ -53,7 +53,8 @@ namespace Expense_Overview
         public DbSet<Deprecitation> Deprecitation { get; set; }
         #endregion
 
-        #region Helpful methods
+        #region Helper
+        #region Backup and Restore
         public bool Backup(string filepath)
         {
             this.Database.ExecuteSqlCommand(
@@ -91,6 +92,73 @@ namespace Expense_Overview
             Deprecitation.RemoveRange(Deprecitation);
             SaveChanges();
 
+            return true;
+        }
+        #endregion
+
+        /// <summary>
+        /// Create a deprecitation from an initial expense.
+        /// The value of the inital expense will be set to zero.
+        /// </summary>
+        public Deprecitation CreateDeprecitation(Expense InitialExpense, int DurationMonths)
+        {
+            Deprecitation depr;
+
+            //Check for deprecitation with this as inititalExpense
+            depr = this.Deprecitation.Where(R => R.InitialExpense.Id == InitialExpense.Id).FirstOrDefault();
+            if (depr != null)//already present
+                return null;
+            //Check for deprecitation with this as expense
+            depr = this.Deprecitation.Where(R => R.DeprecitationExpenses.Select(S => S.Id).ToList().Contains(InitialExpense.Id)).FirstOrDefault();
+            if (depr != null)//already present
+                return null;
+
+            //create new
+            depr = new Deprecitation();
+            depr.Value = InitialExpense.Value;
+            depr.InitialExpense = InitialExpense;
+
+            this.Deprecitation.Add(depr);
+
+            depr.DeprecitationExpenses = new List<Expense>();
+            depr.DurationMonths = DurationMonths;
+            depr.Comment = InitialExpense.Comment;
+            decimal singleExpense = Math.Floor(depr.Value / depr.DurationMonths);//e.g. -1.000€
+            decimal remainingExpense = depr.Value;//e.g. -1.800€
+            DateTime bookingCounter = new DateTime(InitialExpense.Booked.Year, InitialExpense.Booked.Month, 1).AddMonths(1).Date;
+
+            while (remainingExpense < 0)
+            {
+                var exp = new Expense();
+
+                if (remainingExpense <= singleExpense)
+                    exp.Value = singleExpense;
+                else
+                    exp.Value = remainingExpense;
+
+                exp.ClientName = InitialExpense.ClientName;
+                exp.UsageText = InitialExpense.UsageText;
+                exp.Comment = "Deprecitation " + InitialExpense.Comment;
+                exp.ExpenseType = InitialExpense.ExpenseType;
+                exp.Booked = bookingCounter;
+
+                this.Expense.Add(exp);
+                depr.DeprecitationExpenses.Add(exp);
+                bookingCounter = bookingCounter.AddMonths(1);
+                remainingExpense -= singleExpense;
+            }
+            InitialExpense.Value = 0;
+            return depr;
+        }
+
+        /// <summary>
+        /// Remove deprecitation, all expenses from it and restore the inital expense.
+        /// </summary>
+        public bool RemoveDeprecitation(Deprecitation Deprecitation)
+        {
+            Deprecitation.InitialExpense.Value = Deprecitation.Value;
+            this.Expense.RemoveRange(Deprecitation.DeprecitationExpenses);
+            this.Deprecitation.Remove(Deprecitation);
             return true;
         }
         #endregion
@@ -248,5 +316,6 @@ namespace Expense_Overview
         /// All the generated deprecitation costs
         /// </summary>
         public virtual ICollection<Expense> DeprecitationExpenses { get; set; }
+
     }
 }

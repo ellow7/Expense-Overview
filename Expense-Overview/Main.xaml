@@ -22,6 +22,50 @@
                         <TextBox VerticalContentAlignment="Center" x:Name="TBSearch"  TextChanged="SearchBoxes_TextChanged" />
                     </DockPanel>
                     <DataGrid x:Name="DGExpenses" d:ItemsSource="{d:SampleData ItemCount=10}" AutoGenerateColumns="False" CanUserAddRows="False" >
+
+
+
+
+
+
+
+
+                        <!--<DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding InitialDeprecitation}" Value="{x:Null}">
+                                        --><!--<Setter Property="Button.Background" Value="Red"/>--><!--
+                                        <Setter Property="Button.Background" Value="Blue"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                            --><!--<Style.Triggers>
+                                    <DataTrigger Binding="{Binding Comment}" Value="Demo Data">
+                                        <Setter Property="Background" Value="Red"/>
+                                        <Setter Property="Background" Value="Blue"/>
+                                    </DataTrigger>
+                                </Style.Triggers>-->
+                            <!--<Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="LightBlue" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="Blue"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>--><!--
+                        </DataGrid.RowStyle>-->
+
+
+
+
+
+
+
+
+
+
+
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="ID" Binding="{Binding Id}" Visibility="Hidden"/>
                             <DataGridTextColumn Header="Created" Binding="{Binding Created, StringFormat=yyyy-MM-dd HH:mm}" Visibility="Hidden"/>
@@ -49,16 +93,14 @@
                             <DataGridTemplateColumn  Header="Remove">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button x:Name="BTRemoveExpense" Background="Firebrick" Click="BTRemoveExpense_Click">X
-                                        </Button>
+                                        <Button x:Name="BTRemoveExpense" Background="Firebrick" Click="BTRemoveExpense_Click">✘</Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                             <DataGridTemplateColumn  Header="Deprecitation">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button x:Name="BTAddDeprecitation" Background="DodgerBlue" Click="BTAddDeprecitation_Click" >Add
-                                        </Button>
+                                        <Button x:Name="BTAddDeprecitation" Background="DodgerBlue" Click="BTAddDeprecitation_Click" Visibility="{Binding InitialDeprecitation}" >➕</Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -82,8 +124,7 @@
                             <DataGridTemplateColumn  Header="Remove">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button x:Name="BTRemoveExpenseType" Background="Firebrick" Click="BTRemoveExpenseType_Click" >X
-                                        </Button>
+                                        <Button x:Name="BTRemoveExpenseType" Background="Firebrick" Click="BTRemoveExpenseType_Click" >✘</Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -132,7 +173,7 @@
                         <Button x:Name="BTBrowseAutoBackupPath" DockPanel.Dock="Right" Content="Browse" Padding="6" Click="BTBrowseAutoBackupPath_Click" />
                         <Label Content="Auto Backup Path:" Width="180"/>
                         <TextBox x:Name="TBAutoBackupPath" TextChanged="TBAutoBackupPath_TextChanged" VerticalContentAlignment="Center"/>
-                       </DockPanel>
+                    </DockPanel>
                     <DockPanel>
                         <Button x:Name="BTBrowseImportExportPath" DockPanel.Dock="Right" Content="Browse" Padding="6" Click="BTBrowseImportExportPath_Click" />
                         <Label Content="Import Export Path:" Width="180"/>

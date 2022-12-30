@@ -225,12 +225,33 @@ namespace Expense_Overview
             try
             {
                 var toRemove = (Expense)DGExpenses.SelectedItem;
-                var res = MessageBox.Show("Are you sure you want to remove this expense?", "Sure?", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                if (res != MessageBoxResult.Yes)
-                    return;
-                DB.Expense.Remove(toRemove);
-                DB.SaveChanges();
-                LoadData();
+                if (toRemove.InitialDeprecitation != null)//initial deprecitation
+                {
+                    var res = MessageBox.Show("Are you sure you want to remove this deprecitation?\r\n(You can remove the initial expense afterwards)", "Sure?", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    if (res != MessageBoxResult.Yes)
+                        return;
+                    DB.RemoveDeprecitation(toRemove.InitialDeprecitation);
+                    DB.SaveChanges();
+                    LoadData();
+                }
+                else if (toRemove.Deprecitation != null)//part of a deprecitation
+                {
+                    var res = MessageBox.Show("Are you sure you want to remove this deprecitation?", "Sure?", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    if (res != MessageBoxResult.Yes)
+                        return;
+                    DB.RemoveDeprecitation(toRemove.Deprecitation);
+                    DB.SaveChanges();
+                    LoadData();
+                }
+                else//normal expense
+                {
+                    var res = MessageBox.Show("Are you sure you want to remove this expense?", "Sure?", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    if (res != MessageBoxResult.Yes)
+                        return;
+                    DB.Expense.Remove(toRemove);
+                    DB.SaveChanges();
+                    LoadData();
+                }
             }
             catch (Exception ex)
             {
@@ -239,60 +260,23 @@ namespace Expense_Overview
             }
         }
 
-
-
-
-
         private void BTAddDeprecitation_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                throw new NotImplementedException();
                 var expense = (Expense)DGExpenses.SelectedItem;
-                if (expense.Deprecitation != null)
-                    ;//TODO
-
-                Deprecitation depr = DB.Deprecitation.Where(R => R.InitialExpense.Id == expense.Id).FirstOrDefault();
-
-                if (depr == null)
+                if (expense.Deprecitation != null || expense.InitialDeprecitation != null)//already present
                 {
-                    //create new
-                    depr = new Deprecitation();
-                    depr.Value = expense.Value;
-                    depr.InitialExpense = expense;
-
-                    DB.Deprecitation.Add(depr);
+                    MessageBox.Show($"There is already a deprecitation. Delete it first.", "Already present", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
                 }
+                var dlg = new DeprecitationDialog(expense);
+                var res = dlg.ShowDialog();
 
-                //TODO Dialog
+                if (res == null || !(bool)res)
+                    return;
 
-                depr.DurationMonths = 12;
-                depr.Comment = expense.Comment;
-                depr.DeprecitationExpenses = new List<Expense>();
-                decimal singleExpense = -5;//Math.Floor(depr.Value / depr.DurationMonths);
-                decimal remainingExpense = depr.Value;//e.g. -1.800€
-                DateTime bookingCounter = new DateTime(expense.Booked.Year, expense.Booked.Month, 1).AddMonths(1).Date;
-
-                while (remainingExpense < 0)
-                {
-                    var exp = new Expense();
-                    if (remainingExpense <= singleExpense)
-                        exp.Value = singleExpense;
-                    else
-                        exp.Value = remainingExpense;
-                    exp.ClientName = expense.ClientName;
-                    exp.UsageText = expense.UsageText;
-                    exp.Comment = "Deprecitation " + expense.Comment;
-                    exp.ExpenseType = expense.ExpenseType;
-                    exp.Booked = bookingCounter;
-
-                    DB.Expense.Add(exp);
-                    depr.DeprecitationExpenses.Add(exp);
-                    bookingCounter = bookingCounter.AddMonths(1);
-                        remainingExpense -= singleExpense;
-                }
-                expense.Value = 0;
-
+                DB.CreateDeprecitation(expense, dlg.DurationMonths);
                 DB.SaveChanges();
                 LoadData();
             }
