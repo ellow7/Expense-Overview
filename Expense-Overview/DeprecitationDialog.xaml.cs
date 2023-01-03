@@ -46,8 +46,7 @@ namespace Expense_Overview
 
         private void TBDuration_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            int duration;
-            e.Handled = !int.TryParse(e.Text, out duration);//only allow numeric
+            e.Handled = !int.TryParse(e.Text, out int duration);//only allow numeric
         }
 
         private void TBDuration_TextChanged(object sender, TextChangedEventArgs e)
@@ -65,7 +64,7 @@ namespace Expense_Overview
 
             try
             {
-                LBExpenseMonthlyValue.Content = Math.Floor(InitialExpense.Value / duration).ToString("0.00") + InitialExpense.Currency;
+                LBExpenseMonthlyValue.Content = Math.Round(InitialExpense.Value / duration).ToString("0.00") + InitialExpense.Currency;
                 LBExpenseDeprecitationEndDate.Content = new DateTime(InitialExpense.Booked.Year, InitialExpense.Booked.Month, 1).AddMonths(duration).ToString("yyyy-MM-dd");
             }
             catch

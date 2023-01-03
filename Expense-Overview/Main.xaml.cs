@@ -55,7 +55,7 @@ namespace Expense_Overview
             var lastDayThisYear = firstDayNextYear.AddDays(-1);
 
             DPStartDate.SelectedDate = firstDayThisYear;
-            DPEndDate.SelectedDate = lastDayThisYear;
+            DPEndDate.SelectedDate = lastDayThisMonth;
         }
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
@@ -279,6 +279,7 @@ namespace Expense_Overview
                 DB.CreateDeprecitation(expense, dlg.DurationMonths);
                 DB.SaveChanges();
                 LoadData();
+                MessageBox.Show($"Deprecitation added.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -314,6 +315,7 @@ namespace Expense_Overview
                 DB.ExpenseType.Remove(toRemove);
                 DB.SaveChanges();
                 LoadData();
+                MessageBox.Show($"Removal of {toRemove.ToString()} successful.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -452,7 +454,10 @@ namespace Expense_Overview
                     return;
 
                 OpenFileDialog ofd = new OpenFileDialog();
-                ofd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                if (TBAutoBackupPath.Text == "" || !new DirectoryInfo(TBAutoBackupPath.Text).Exists)
+                    ofd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                else
+                    ofd.InitialDirectory = TBAutoBackupPath.Text;
                 ofd.RestoreDirectory = true;
                 ofd.Filter = "Backup (*.bak)|*.bak";
 

@@ -123,31 +123,29 @@ namespace Expense_Overview
             depr.DeprecitationExpenses = new List<Expense>();
             depr.DurationMonths = DurationMonths;
             depr.Comment = InitialExpense.Comment;
-            decimal singleExpense = Math.Floor(depr.Value / depr.DurationMonths);//e.g. -1.000€
-            decimal remainingExpense = depr.Value;//e.g. -1.800€
+            decimal singleExpense = Math.Round(depr.Value / depr.DurationMonths);//e.g. -6€ or +6€
+            decimal remainingExpense = depr.Value;//e.g. -69€ or +69€
             DateTime bookingCounter = new DateTime(InitialExpense.Booked.Year, InitialExpense.Booked.Month, 1).AddMonths(1).Date;
 
-            while (remainingExpense < 0)
+            for (int i = 1; i <= depr.DurationMonths; i++)
             {
                 var exp = new Expense();
 
-                if (remainingExpense <= singleExpense)
-                    exp.Value = singleExpense;
-                else
-                    exp.Value = remainingExpense;
-
+                exp.Value = singleExpense;
+                exp.Comment = $"Deprecitation {i} " + InitialExpense.Comment;
                 exp.ClientName = InitialExpense.ClientName;
                 exp.UsageText = InitialExpense.UsageText;
-                exp.Comment = "Deprecitation " + InitialExpense.Comment;
                 exp.ExpenseType = InitialExpense.ExpenseType;
                 exp.Booked = bookingCounter;
 
                 this.Expense.Add(exp);
                 depr.DeprecitationExpenses.Add(exp);
+
                 bookingCounter = bookingCounter.AddMonths(1);
                 remainingExpense -= singleExpense;
             }
-            InitialExpense.Value = 0;
+
+            InitialExpense.Value = remainingExpense;
             return depr;
         }
 
