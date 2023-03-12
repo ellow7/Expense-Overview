@@ -21,7 +21,7 @@
                         <Button x:Name="BTExportExpenses" Content="Export" Padding="6" Click="BTExportExpenses_Click" DockPanel.Dock="Right"/>
                         <TextBox VerticalContentAlignment="Center" x:Name="TBSearch"  TextChanged="SearchBoxes_TextChanged" />
                     </DockPanel>
-                    <DataGrid x:Name="DGExpenses" d:ItemsSource="{d:SampleData ItemCount=10}" AutoGenerateColumns="False" CanUserAddRows="False" >
+                    <DataGrid x:Name="DGExpenses" d:ItemsSource="{d:SampleData ItemCount=10}" AutoGenerateColumns="False" CanUserAddRows="False" CellEditEnding="DGExpenses_CellEditEnding" >
 
 
 
@@ -135,8 +135,8 @@
             <TabItem Header="Import">
                 <DockPanel>
                     <DockPanel DockPanel.Dock="Bottom">
-                        <Button x:Name="BTSaveImport" Content="Save to DB" Padding="6" DockPanel.Dock="Right" Click="BTSaveImport_Click"/>
-                        <Button x:Name="BTImport" Content="Import" Padding="6" DockPanel.Dock="Right" Click="BTImport_Click"/>
+                        <Button x:Name="BTSaveImport" Content="Save content to DB" Padding="6" DockPanel.Dock="Right" Click="BTSaveImport_Click"/>
+                        <Button x:Name="BTImport" Content="Import File" Padding="6" DockPanel.Dock="Right" Click="BTImport_Click"/>
                         <Label />
                     </DockPanel>
                     <DataGrid x:Name="DGImport" d:ItemsSource="{d:SampleData ItemCount=10}" ScrollViewer.CanContentScroll="False" AutoGenerateColumns="False" CanUserAddRows="False">

@@ -59,7 +59,9 @@ namespace Expense_Overview
         }
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            //TODO: Check for pending changes
+            if (ExpenseChanges > 0)//user changed some data
+                if (MessageBox.Show($"You made {ExpenseChanges} changes to the current data.\r\nSave before exiting?", "Changes not saved!", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                    BTSaveData_Click(this, null);
             this.Focus();
         }
 
@@ -70,6 +72,10 @@ namespace Expense_Overview
         }
         private void LoadData(DateTime start, DateTime end)
         {
+            if (ExpenseChanges > 0)//user changed some data
+                if (MessageBox.Show($"You made {ExpenseChanges} changes to the current data.\r\nSave now? Otherwise they will be lost!", "Changes not saved!", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                    DB.SaveChanges();
+
             try
             {
                 //apply settings
@@ -112,11 +118,18 @@ namespace Expense_Overview
                 #region Depricitations
                 DB.Deprecitation.Load();
                 #endregion
+
+                ExpenseChanges = 0;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading.\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+        int ExpenseChanges = 0;//Amount of changes in current dataset (to prevent loading data without saving)
+        private void DGExpenses_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        {
+            ExpenseChanges++;
         }
         private void BTExportExpenses_Click(object sender, RoutedEventArgs e)
         {
@@ -212,6 +225,7 @@ namespace Expense_Overview
             {
                 this.Focus();
                 DB.SaveChanges();
+                ExpenseChanges = 0;
                 LoadData();
             }
             catch (Exception ex)
@@ -232,6 +246,7 @@ namespace Expense_Overview
                         return;
                     DB.RemoveDeprecitation(toRemove.InitialDeprecitation);
                     DB.SaveChanges();
+                    ExpenseChanges = 0;
                     LoadData();
                 }
                 else if (toRemove.Deprecitation != null)//part of a deprecitation
@@ -241,6 +256,7 @@ namespace Expense_Overview
                         return;
                     DB.RemoveDeprecitation(toRemove.Deprecitation);
                     DB.SaveChanges();
+                    ExpenseChanges = 0;
                     LoadData();
                 }
                 else//normal expense
@@ -250,6 +266,7 @@ namespace Expense_Overview
                         return;
                     DB.Expense.Remove(toRemove);
                     DB.SaveChanges();
+                    ExpenseChanges = 0;
                     LoadData();
                 }
             }
@@ -278,6 +295,7 @@ namespace Expense_Overview
 
                 DB.CreateDeprecitation(expense, dlg.DurationMonths);
                 DB.SaveChanges();
+                ExpenseChanges = 0;
                 LoadData();
                 MessageBox.Show($"Deprecitation added.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -296,6 +314,7 @@ namespace Expense_Overview
             {
                 DB.ExpenseType.Add(new ExpenseType());
                 DB.SaveChanges();
+                ExpenseChanges = 0;
             }
             catch (Exception ex)
             {
@@ -314,6 +333,7 @@ namespace Expense_Overview
                     return;
                 DB.ExpenseType.Remove(toRemove);
                 DB.SaveChanges();
+                ExpenseChanges = 0;
                 LoadData();
                 MessageBox.Show($"Removal of {toRemove.ToString()} successful.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -332,6 +352,11 @@ namespace Expense_Overview
         {
             try
             {
+                //check if items present
+                if (DGImport.Items.Count > 0)
+                    if (MessageBox.Show("There is currently an import open. Do you want to overwrite it?", "Overwrite current import?", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                        return;
+
                 DGImport.ItemsSource = null;
                 import = new DibaStatement();//change this if you implemented new types
                 import.ReadImport();
@@ -356,6 +381,7 @@ namespace Expense_Overview
             {
                 DB.Expense.AddRange(import.Expenses);
                 DB.SaveChanges();
+                ExpenseChanges = 0;
                 DGImport.ItemsSource = null;//reset import
                 import = null;
                 importHandler = null;
@@ -407,6 +433,8 @@ namespace Expense_Overview
                 var file = new FileInfo(System.IO.Path.Combine(directory, filename));
                 if (file.Exists)
                     return;//already done backup
+                if (MessageBox.Show("Do monthly backup?", "Do backup?", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                    return;
                 var success = DB.Backup(file.FullName);
                 if (!success)
                     MessageBox.Show($"Error writing backup.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -630,6 +658,7 @@ namespace Expense_Overview
                 DB.Expense.Add(exp);
             }
             DB.SaveChanges();
+            ExpenseChanges = 0;
             LoadData();
         }
         private void BTRemoveDemoData_Click(object sender, RoutedEventArgs e)
@@ -646,6 +675,7 @@ namespace Expense_Overview
             var remove = DB.Expense.Where(R => R.Comment == "Demo Data").ToList();
             DB.Expense.RemoveRange(remove);
             DB.SaveChanges();
+            ExpenseChanges = 0;
             LoadData();
         }
         #endregion
