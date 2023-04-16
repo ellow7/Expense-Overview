@@ -284,7 +284,8 @@ namespace Expense_Overview
                 var expense = (Expense)DGExpenses.SelectedItem;
                 if (expense.Deprecitation != null || expense.InitialDeprecitation != null)//already present
                 {
-                    MessageBox.Show($"There is already a deprecitation. Delete it first.", "Already present", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    new DeprecitationDialog(expense.Deprecitation).ShowDialog();
+                    //MessageBox.Show($"There is already a deprecitation. Delete it first.", "Already present", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
                 var dlg = new DeprecitationDialog(expense);

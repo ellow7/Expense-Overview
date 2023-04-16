@@ -20,16 +20,35 @@ namespace Expense_Overview
     public partial class DeprecitationDialog : Window
     {
         public int DurationMonths = 0;
+        public decimal ExpenseValue = 0;
         Expense InitialExpense;
-        public DeprecitationDialog(Expense InitialExpense)
+        
+        public DeprecitationDialog(Expense InitialExpense)//new deprecitation, allow editing
         {
             InitializeComponent();
+            this.Title = "Create Deprecitation";
             this.InitialExpense = InitialExpense;
+            this.ExpenseValue = InitialExpense.Value;//we need this, because when editing an existing deprecitation, the value would be the deprecitation value
+
+            TBDuration.Text = "12";
+            TBDuration_TextChanged(this, null);//run first calculation
+        }
+        public DeprecitationDialog(Deprecitation Deprecitation)//existsing derprecitation, just view and prevent editing
+        {
+            InitializeComponent();
+            this.Title = "Show Deprecitation";
+            this.InitialExpense = Deprecitation.InitialExpense;
+            this.ExpenseValue = Deprecitation.Value;
+
+            TBDuration.Text = Deprecitation.DurationMonths.ToString();
+            TBDuration_TextChanged(this, null);//run calculation
+
+            //prevent editing
+            TBDuration.IsEnabled = false;
+            BTOkay.IsEnabled = false;
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            TBDuration.Text = "12";
-            TBDuration_TextChanged(this, null);
         }
 
         private void BTCancel_Click(object sender, RoutedEventArgs e)
@@ -59,12 +78,12 @@ namespace Expense_Overview
 
             LBExpenseName.Content = InitialExpense.UsageText;
             LBExpenseClientName.Content = InitialExpense.ClientName;
-            LBExpenseValue.Content = InitialExpense.Value.ToString("0.00") + InitialExpense.Currency;
+            LBExpenseValue.Content = ExpenseValue.ToString("0.00") + InitialExpense.Currency;
             LBExpenseBooked.Content = InitialExpense.Booked.ToString("yyyy-MM-dd");
 
             try
             {
-                LBExpenseMonthlyValue.Content = Math.Round(InitialExpense.Value / duration).ToString("0.00") + InitialExpense.Currency;
+                LBExpenseMonthlyValue.Content = Math.Round(ExpenseValue / duration).ToString("0.00") + InitialExpense.Currency;
                 LBExpenseDeprecitationEndDate.Content = new DateTime(InitialExpense.Booked.Year, InitialExpense.Booked.Month, 1).AddMonths(duration).ToString("yyyy-MM-dd");
             }
             catch
