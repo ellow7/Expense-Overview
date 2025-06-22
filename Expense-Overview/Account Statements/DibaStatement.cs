@@ -115,6 +115,7 @@ namespace Expense_Overview.Account_Statements
     public class DIBAStatementFormat
     {
         public DateTime Buchung { get; set; }
+        [Name("Wertstellungsdatum")]
         public DateTime Valuta { get; set; }
         [Name("Auftraggeber/Empfänger")]
         public string Auftraggeber { get; set; }
